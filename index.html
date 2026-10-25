@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#fdf8f2">
+<title>ليل… يوم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap">
+<link rel="preload" href="meta.json?v=4" as="fetch" crossorigin>
+<script>try{if(localStorage.getItem('ly-mode')==='night')document.documentElement.classList.add('night')}catch(_){}</script>
+<style>
+[hidden]{display:none!important}
+body{margin:0}
+/* a light winter morning that can turn into a quiet winter night; a small locked door, then a book you turn page by page */
+:root{
+  --paper:#fdf8f2; --blush:#f6e4e6; --lilac:#ece3f0; --wine:#8a2a3a; --ink:#3d2a2f;
+  --soft:#b98b93; --line:#ead7d9; --white:#ffffff; --shadow:rgba(90,40,50,.18);
+  --display:"Aref Ruqaa","Amiri",serif; --body:"Amiri","Times New Roman",serif;
+  color-scheme:light;
+}
+:root.night{
+  --paper:#121528; --blush:#2a2140; --lilac:#1d2340; --wine:#efb8c3; --ink:#ebe3ea;
+  --soft:#a99cbc; --line:#2f3453; --white:#1b1f37; --shadow:rgba(0,0,0,.45);
+  color-scheme:dark;
+}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);overflow-x:hidden;transition:background-color 1.8s ease,color 1.8s ease}
+.sky,.nightsky{position:fixed;inset:0;pointer-events:none;z-index:0;transition:opacity 2.2s ease}
+.sky{background:radial-gradient(70% 45% at 15% 0%,#ece3f0,transparent 70%),radial-gradient(70% 50% at 100% 100%,#f6e4e6,transparent 70%),#fdf8f2}
+.nightsky{opacity:0;background:
+  radial-gradient(42% 26% at 15% 0%,rgba(236,228,255,.20),transparent 70%),
+  radial-gradient(70% 50% at 100% 100%,rgba(122,70,118,.30),transparent 70%),
+  linear-gradient(#0a0d1f 0%,#121731 55%,#1d1832 100%)}
+.night .sky{opacity:0}
+.night .nightsky{opacity:1}
+.moon{position:fixed;left:15%;top:calc(env(safe-area-inset-top,0px) - 16px);width:46px;height:46px;margin-left:-23px;border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(circle at 38% 36%,#fffaf0 0%,#f3ead8 55%,#e2d6c2 100%);
+  box-shadow:0 0 18px 4px rgba(255,246,226,.35),0 0 60px 18px rgba(214,206,255,.16),0 0 140px 50px rgba(190,180,240,.08);
+  opacity:0;transform:translateY(-14px) scale(.9);transition:opacity 2.4s ease .3s,transform 2.4s ease .3s}
+.moon::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 62% 60%,rgba(190,176,156,.35) 0 9%,transparent 10%),radial-gradient(circle at 34% 64%,rgba(190,176,156,.25) 0 6%,transparent 7%),radial-gradient(circle at 56% 30%,rgba(190,176,156,.22) 0 5%,transparent 6%)}
+.night .moon{opacity:1;transform:none}
+#snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.wrap{position:relative;z-index:2;direction:rtl;height:100vh;height:100dvh;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+
+/* door */
+#gate{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:min(12px,1.6vh);transition:opacity .8s ease,transform .8s ease}
+#gate.leaving{opacity:0;transform:translateY(-10px)}
+.lily{width:min(150px,40vw,17vh);color:var(--wine);animation:sway 6s ease-in-out infinite;transform-origin:50% 100%;transition:color 1.8s ease}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,12vw,68px);line-height:1.2;margin:0;color:var(--wine);transition:color 1.8s ease}
+.hint{font-size:20px;color:var(--soft);margin:0;line-height:1.8}
+.lock{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:10px;width:min(320px,100%)}
+.pick{display:flex;gap:10px;width:100%}
+.pick label{flex:1;display:flex;flex-direction:column;gap:5px;font-size:15px;color:var(--soft);text-align:right}
+select,.digits input{transition:background-color 1.8s ease,color 1.8s ease,border-color 1.8s ease}
+select{appearance:none;-webkit-appearance:none;width:100%;font:inherit;font-size:20px;color:var(--ink);background:var(--white);
+  border:1px solid var(--line);border-radius:14px;padding:9px 12px;text-align:center;text-align-last:center;box-shadow:0 4px 14px rgba(138,42,58,.06)}
+.digits{display:flex;flex-direction:column;gap:5px;width:100%;font-size:15px;color:var(--soft);text-align:right}
+.digits input{width:100%;box-sizing:border-box;font:inherit;font-size:22px;letter-spacing:.5em;text-indent:.5em;color:var(--ink);background:var(--white);direction:ltr;
+  border:1px solid var(--line);border-radius:14px;padding:8px 12px;text-align:center;box-shadow:0 4px 14px rgba(138,42,58,.06)}
+.digits input:focus-visible{outline:2px solid var(--wine);outline-offset:3px}
+select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-offset:3px}
+.open{width:100%;font-family:var(--display);font-weight:700;font-size:22px;color:var(--white);cursor:pointer;
+  background:var(--wine);border:0;border-radius:999px;padding:9px 18px;box-shadow:0 8px 20px rgba(138,42,58,.22);transition:background-color 1.8s ease,color 1.8s ease}
+.open:active{transform:translateY(1px)}
+.open:disabled{opacity:.7}
+.msg{min-height:1.8em;font-size:17px;color:var(--wine);margin:0}
+
+/* a quiet note between the door and the book */
+#note{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;cursor:pointer;transition:opacity 1s ease}
+#note.out{opacity:0}
+#note p{margin:0;font-size:clamp(21px,5.6vw,27px);line-height:2;color:var(--wine);max-width:440px;text-wrap:balance;opacity:0;transform:translateY(8px);transition:opacity 1.4s ease,transform 1.4s ease}
+#note p.on{opacity:1;transform:none}
+#note .orn{width:70px;height:10px;color:var(--soft);margin-top:14px;opacity:0;transition:opacity 1.4s ease}
+#note .orn.on{opacity:.8}
+
+/* reader */
+#reader{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px;opacity:0;transition:opacity .9s ease}
+#reader.show{opacity:1}
+.bar{width:100%;max-width:520px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bar .t{font-family:var(--display);font-size:clamp(19px,5.6vw,24px);color:var(--wine);white-space:nowrap;transition:color 1.8s ease}
+.tools{display:flex;align-items:center;gap:6px}
+.tools button{box-sizing:border-box;border:1px solid var(--line);background:var(--white);border-radius:999px;cursor:pointer;
+  transition:background-color 1.8s ease,border-color 1.8s ease,color 1.8s ease,opacity .3s,box-shadow .3s}
+.snd{height:30px;min-width:30px;padding:0 7px;font-size:13px;line-height:1;opacity:.5;display:inline-flex;align-items:center;justify-content:center}
+.snd.on{opacity:1;box-shadow:0 0 0 3px var(--blush)}
+.snd.wait{animation:breath 1s ease-in-out infinite}
+@keyframes breath{50%{opacity:.25}}
+.dl,.mode{height:36px;display:inline-flex;align-items:center;justify-content:center}
+.dl{font-family:var(--body);font-weight:700;font-size:16px;color:var(--wine);padding:0 13px;white-space:nowrap}
+.mode{width:50px;padding:0;color:var(--wine);position:relative}
+.mode svg{position:absolute;width:22px;height:22px;transition:opacity .9s ease,transform .9s ease}
+.mode .to-night{opacity:1;transform:none}
+.mode .to-day{opacity:0;transform:rotate(-90deg) scale(.6)}
+.night .mode .to-night{opacity:0;transform:rotate(90deg) scale(.6)}
+.night .mode .to-day{opacity:1;transform:none}
+.stage{position:relative;overflow:hidden;padding:18px 0 26px;margin:-18px 0 -26px}
+.book{position:relative;perspective:2200px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;transition:filter 1.8s ease}
+.night .book{filter:brightness(.8) sepia(.22) saturate(.95)}
+.leaf{position:absolute;inset:0;background:var(--paper);border-radius:4px 2px 2px 4px;overflow:hidden;box-shadow:0 14px 34px var(--shadow),0 2px 6px rgba(90,40,50,.08)}
+.leaf canvas{display:block;width:100%;height:100%}
+.leaf .dim{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to left,rgba(60,20,30,.28),rgba(60,20,30,0) 70%);opacity:0}
+.turn{position:absolute;left:0;top:-8%;width:100%;height:116%;pointer-events:none}
+.nav{display:flex;align-items:center;gap:18px}
+.nav button{direction:ltr;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--white);color:var(--wine);font-size:20px;cursor:pointer;display:grid;place-items:center;transition:background-color 1.8s ease,border-color 1.8s ease,color 1.8s ease}
+.nav button:disabled{opacity:.35;cursor:default}
+.count{font-size:17px;color:var(--soft);min-width:84px;text-align:center;font-variant-numeric:tabular-nums}
+.status{font-size:16px;color:var(--soft);margin:0}
+
+@media (prefers-reduced-motion:reduce){.lily{animation:none}#gate,#reader,#note,#note p,.sky,.nightsky,.moon,body,.book{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="sky" aria-hidden="true"></div>
+<div class="nightsky" aria-hidden="true"></div>
+<div class="moon" aria-hidden="true"></div>
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<main class="wrap">
+  <section id="gate">
+    <svg class="lily" viewBox="0 0 120 140" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 136V70"/>
+        <path d="M60 104c-10-2-18 4-22 12 9 1 17-3 22-12z" fill="#e9f0e4"/>
+        <path d="M60 92c9-3 17 1 22 8-9 2-17-1-22-8z" fill="#e9f0e4"/>
+        <path d="M60 70C50 56 46 36 52 14c8 16 11 36 8 56z" fill="#f7dfe3"/>
+        <path d="M60 70c10-14 14-34 8-56-8 16-11 36-8 56z" fill="#f7dfe3"/>
+        <path d="M60 72C44 66 26 66 12 76c16 6 34 4 48-4z" fill="#f7dfe3"/>
+        <path d="M60 72c16-6 34-6 48 4-16 6-34 4-48-4z" fill="#f7dfe3"/>
+        <path d="M59 71C48 76 40 88 38 102c12-8 19-19 21-31z" fill="#f2d2d8"/>
+        <path d="M61 71c11 5 19 17 21 31-12-8-19-19-21-31z" fill="#f2d2d8"/>
+        <path d="M60 70l-6-22M60 70l6-22M60 70l-12-14M60 70l12-14" stroke-width="1"/>
+        <g fill="currentColor" stroke="none"><circle cx="54" cy="47" r="2"/><circle cx="66" cy="47" r="2"/><circle cx="48" cy="55" r="2"/><circle cx="72" cy="55" r="2"/></g>
+        <path d="M54 32l3 10M66 32l-3 10M36 72l10 1M84 72l-10 1" stroke-width=".8" opacity=".6"/>
+      </g>
+    </svg>
+    <h1>ليل… يوم</h1>
+    <p class="hint">هالباب ما ينفتح إلا بيومك</p>
+    <form class="lock" id="lock" autocomplete="off" novalidate>
+      <div class="pick">
+        <label for="day">اليوم<select id="day" required><option value="">—</option></select></label>
+        <label for="month">الشهر<select id="month" required><option value="">—</option></select></label>
+      </div>
+      <label class="digits" for="tail">وآخر أربع أرقام من جوالك<input id="tail" inputmode="numeric" maxlength="8" autocomplete="off" autocorrect="off" spellcheck="false"></label>
+      <button class="open" type="submit">فتح</button>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section id="note" hidden>
+    <p>لو كانت الدنيا أهدى شوي، كان جاك هاليوم بأكثر من كذا…</p>
+    <p>بس اخترت الهدية الأخيره اللي ما يشوفها أحد غيرك</p>
+    <svg class="orn" viewBox="0 0 70 10" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1"><path d="M0 5h28M42 5h28"/><path d="M35 1l4 4-4 4-4-4z"/></g></svg>
+  </section>
+
+  <section id="reader" hidden>
+    <div class="bar">
+      <span class="t">ليل… يوم</span>
+      <div class="tools">
+        <button class="snd" id="sndNature" type="button" aria-pressed="false" aria-label="صوت الطبيعة">🍃❄️</button>
+        <button class="snd" id="sndFire" type="button" aria-pressed="false" aria-label="صوت النار">🪵</button>
+        <button class="mode" id="mode" type="button" aria-label="الوضع الليلي">
+          <svg class="to-night" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3.6a8 8 0 1 0 4.9 12.3 6.6 6.6 0 0 1-4.9-12.3z"/><path d="M19 3.2v2.6M17.7 4.5h2.6" stroke-width="1.2"/><circle cx="21" cy="9.4" r=".5" fill="currentColor" stroke="none"/></g></svg>
+          <svg class="to-day" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.1M12 19.1v2.1M2.8 12h2.1M19.1 12h2.1M5.5 5.5l1.5 1.5M17 17l1.5 1.5M5.5 18.5L7 17M17 7l1.5-1.5"/></g></svg>
+        </button>
+        <button class="dl" id="dl" type="button">تحميل الكتاب</button>
+      </div>
+    </div>
+    <p class="status" id="status">لحظة… الصفحات تتفتح</p>
+    <div class="stage" id="stage" hidden>
+      <div class="book" id="book">
+        <div class="leaf" id="base"><div class="dim" id="dim"></div></div>
+        <canvas class="turn" id="turn"></canvas>
+      </div>
+    </div>
+    <div class="nav" id="nav" hidden>
+      <button type="button" id="prev" aria-label="الصفحة السابقة">›</button>
+      <span class="count" id="count"></span>
+      <button type="button" id="next" aria-label="الصفحة التالية">‹</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const V = '4';
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const root = document.documentElement;
+
+  /* ---------- the files: a tiny lock file first, then the pages stream in behind it ---------- */
+  const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  let metaP = null, meta = null;
+  function getMeta(){
+    if (!metaP) metaP = fetch('meta.json?v=' + V).then(r => { if (!r.ok) throw new Error('net'); return r.json(); })
+      .then(m => { meta = m; startPages(); return m; })
+      .catch(e => { metaP = null; throw e; });
+    return metaP;
+  }
+  let pagesBuf = null, got = 0, pagesFailed = false, pagesTries = 0;
+  const waiters = [];
+  function wake(){ for (let i = waiters.length - 1; i >= 0; i--){ const w = waiters[i];
+    if (got >= w.end){ waiters.splice(i, 1); w.ok(); } else if (pagesFailed){ waiters.splice(i, 1); w.no(new Error('net')); } } }
+  function startPages(){
+    if (pagesBuf) return;
+    const last = meta.p[meta.p.length - 1]; pagesBuf = new Uint8Array(last[1] + last[2]);
+    pull();
+  }
+  async function pull(){
+    pagesFailed = false;
+    try {
+      const r = await fetch('pages.bin?v=' + V, got ? {headers: {Range: 'bytes=' + got + '-'}} : {});
+      if (!r.ok) throw new Error('net');
+      if (r.status === 200) got = 0;                 // the server sent everything again
+      if (r.body && r.body.getReader){
+        const rd = r.body.getReader();
+        for (;;){ const {done, value} = await rd.read(); if (done) break;
+          pagesBuf.set(value.subarray(0, Math.max(0, pagesBuf.length - got)), got); got = Math.min(pagesBuf.length, got + value.length); wake(); }
+      } else { const all = new Uint8Array(await r.arrayBuffer()); pagesBuf.set(all.subarray(0, pagesBuf.length)); got = Math.min(all.length, pagesBuf.length); wake(); }
+      if (got < pagesBuf.length) throw new Error('short');
+    } catch (_){
+      if (++pagesTries < 6){ setTimeout(pull, 1500 * pagesTries); return; }
+      pagesFailed = true; wake();
+    }
+  }
+  const upTo = end => got >= end ? Promise.resolve() : new Promise((ok, no) => {
+    if (pagesFailed){ pagesTries = 0; pull(); }
+    waiters.push({end, ok, no});
+  });
+  getMeta().catch(() => {});
+
+  /* ---------- soft snow, a few pink petals, and at night a handful of quiet stars ---------- */
+  const cv = document.getElementById('snow'), cx = cv.getContext('2d');
+  let W, H; const flakes = [], petals = [], stars = [];
+  let nightAmt = root.classList.contains('night') ? 1 : 0;
+  function size(){ const r = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+    cv.width = W * r; cv.height = H * r; cx.setTransform(r, 0, 0, r, 0, 0); }
+  size(); addEventListener('resize', () => { size(); fit(); if (still) draw(0); });
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  for (let i = 0; i < 60; i++) flakes.push({x: rnd(0, 1), y: rnd(0, 1), r: rnd(1, 3.2), s: rnd(.2, .6), w: rnd(0, 6.3)});
+  for (let i = 0; i < 6; i++) petals.push({x: rnd(0, 1), y: rnd(-1, 1), s: rnd(.25, .45), a: rnd(0, 6.3), k: rnd(.6, 1)});
+  for (let i = 0; i < 34; i++){
+    let x, y; do { x = rnd(.03, .97); y = Math.pow(Math.random(), 1.4) * .78; } while (Math.hypot(x - .15, y * 1.6) < .16);   // keep the moon's corner clear
+    stars.push({x, y, r: rnd(.5, 1.35), sp: rnd(.35, 1.1), ph: rnd(0, 6.3), base: rnd(.25, .55)});
+  }
+  function draw(t){
+    const target = root.classList.contains('night') ? 1 : 0;
+    nightAmt = still ? target : nightAmt + (target - nightAmt) * .035;
+    if (Math.abs(target - nightAmt) < .002) nightAmt = target;
+    const s = (t || 0) / 1000;
+    cx.clearRect(0, 0, W, H);
+    if (nightAmt > 0){
+      for (const st of stars){
+        const tw = .5 + .5 * Math.sin(s * st.sp + st.ph), a = nightAmt * (st.base + (1 - st.base) * tw * tw);
+        const x = st.x * W, y = st.y * H;
+        cx.fillStyle = 'rgba(255,247,232,' + a.toFixed(3) + ')';
+        cx.beginPath(); cx.arc(x, y, st.r, 0, 6.283); cx.fill();
+        if (st.r > 1.05){                          // the brighter ones get a faint glint
+          const g = st.r * (2.6 + 2.4 * tw);
+          cx.strokeStyle = 'rgba(255,247,232,' + (a * .35).toFixed(3) + ')'; cx.lineWidth = .6;
+          cx.beginPath(); cx.moveTo(x - g, y); cx.lineTo(x + g, y); cx.moveTo(x, y - g); cx.lineTo(x, y + g); cx.stroke();
+        }
+      }
+    }
+    const ring = 'rgba(' + Math.round(185 + 70 * nightAmt) + ',' + Math.round(139 + 116 * nightAmt) + ',' + Math.round(147 + 108 * nightAmt) + ',' + (.35 - .23 * nightAmt).toFixed(3) + ')';
+    for (const f of flakes){
+      if (!still){ f.y += f.s / H * 1.4; f.w += .012; if (f.y > 1.02){ f.y = -.02; f.x = Math.random(); } }
+      const x = f.x * W + Math.sin(f.w) * 10;
+      cx.beginPath(); cx.fillStyle = 'rgba(255,255,255,' + (.95 - .1 * nightAmt).toFixed(3) + ')'; cx.arc(x, f.y * H, f.r, 0, 6.283); cx.fill();
+      cx.lineWidth = .6; cx.strokeStyle = ring; cx.stroke();
+    }
+    for (const p of petals){
+      if (!still){ p.y += p.s / H * 1.1; p.a += .006; if (p.y > 1.05){ p.y = -.05; p.x = Math.random(); } }
+      cx.save(); cx.translate(p.x * W + Math.sin(p.a * 2) * 26, p.y * H); cx.rotate(p.a); cx.scale(p.k, p.k);
+      cx.fillStyle = 'rgba(232,160,175,' + (.7 - .12 * nightAmt).toFixed(3) + ')';
+      cx.beginPath(); cx.moveTo(0, -9); cx.bezierCurveTo(8, -5, 6, 7, 0, 10); cx.bezierCurveTo(-6, 7, -8, -5, 0, -9); cx.fill();
+      cx.restore();
+    }
+    if (!still) requestAnimationFrame(draw);
+  }
+  still ? draw(0) : requestAnimationFrame(draw);
+
+  /* ---------- lock ---------- */
+  const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const day = document.getElementById('day'), month = document.getElementById('month');
+  for (let d = 1; d <= 31; d++) day.add(new Option(String(d), String(d)));
+  months.forEach((m, i) => month.add(new Option(m, String(i + 1))));
+  const msg = document.getElementById('msg'), form = document.getElementById('lock'), tail = document.getElementById('tail');
+  const openBtn = form.querySelector('.open');
+  const digits = s => String(s || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9]/g, '').slice(0, 4);
+  tail.addEventListener('blur', () => setTimeout(() => scrollTo(0, 0), 60));
+  tail.addEventListener('input', () => { const v = digits(tail.value); if (v !== tail.value) tail.value = v; });
+
+  let key = null;
+  const decrypt = (iv, bytes) => crypto.subtle.decrypt({name: 'AES-GCM', iv: b64(iv)}, key, bytes).then(b => new Uint8Array(b));
+  async function dateRight(date){
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(date), 'PBKDF2', false, ['deriveBits']);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits({name: 'PBKDF2', salt: b64(meta.vs), iterations: 250000, hash: 'SHA-256'}, base, 128));
+    const want = b64(meta.v); return bits.every((x, i) => x === want[i]);
+  }
+  async function makeKey(pass){
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({name: 'PBKDF2', salt: b64(meta.s), iterations: 250000, hash: 'SHA-256'},
+      base, {name: 'AES-GCM', length: 256}, false, ['decrypt']);
+  }
+
+  // only a real cryptographic "no" is ever called a wrong answer; a slow line is just waited for or retried
+  let checking = false;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (checking) return;
+    if (!day.value || !month.value){ msg.textContent = 'اختاري اليوم والشهر'; return; }
+    const code = digits(tail.value);
+    if (code.length !== 4){ msg.textContent = 'اكتبي آخر أربع أرقام'; return; }
+    tail.blur(); scrollTo(0, 0);
+    if (!window.crypto || !crypto.subtle){ msg.textContent = 'افتحي الرابط من Safari'; return; }
+    checking = true; openBtn.disabled = true; msg.textContent = '…';
+    try {
+      let tries = 0;
+      for (;;){ try { await getMeta(); break; } catch (_){ if (++tries >= 4) throw new Error('net'); await new Promise(r => setTimeout(r, 1200)); } }
+      const date = month.value + '-' + day.value;
+      if (!(await dateRight(date))){ msg.textContent = 'ركزي شوي بيوم ميلادك'; return; }
+      key = await makeKey(date + '-' + code);
+      try { await decrypt(meta.k.i, b64(meta.k.c)); }
+      catch (_){ key = null; msg.textContent = 'ركزي شوي بالرقم'; return; }   // the check is local and tiny: a failure here can only mean the number
+    } catch (_){
+      msg.textContent = 'النت ثقيل شوي… جرّبي مرة ثانية'; return;
+    } finally { checking = false; openBtn.disabled = false; }
+    msg.textContent = '';
+    const gate = document.getElementById('gate'); gate.classList.add('leaving');
+    setTimeout(() => { gate.hidden = true; showNote(); }, still ? 0 : 800);
+  });
+  async function pageBytes(n){
+    const [iv, off, len] = meta.p[n - 1];
+    await upTo(off + len);
+    return decrypt(iv, pagesBuf.subarray(off, off + len));
+  }
+
+  /* ---------- book: a real page you hold and turn ---------- */
+  const bookEl = document.getElementById('book'), base = document.getElementById('base'), turnEl = document.getElementById('turn');
+  const dimEl = document.getElementById('dim'), countEl = document.getElementById('count');
+  const nextBtn = document.getElementById('next'), prevBtn = document.getElementById('prev');
+  let doc = null, cur = 1, BW = 0, BH = 0, busy = false, drag = null;
+  const cache = new Map();
+  const ar = n => n.toLocaleString('ar-SA');
+
+  function fit(){
+    if (document.getElementById('stage').hidden) return;
+    const wrap = document.querySelector('.wrap'), bar = document.querySelector('.bar'), nav = document.getElementById('nav');
+    const maxH = wrap.clientHeight - 40 - bar.offsetHeight - nav.offsetHeight - 24 - 14, maxW = Math.min(wrap.clientWidth - 32, 520);
+    let w = maxW, h = w * 210 / 148; if (h > maxH){ h = Math.max(maxH, 240); w = h * 148 / 210; }
+    BW = w; BH = h; bookEl.style.width = w + 'px'; bookEl.style.height = h + 'px';
+  }
+  function pageCanvas(n){
+    if (cache.has(n)) return cache.get(n);
+    const job = (async () => {
+      const bytes = await pageBytes(n);
+      const img = await createImageBitmap(new Blob([bytes], {type: 'image/webp'}));
+      const r = Math.min(devicePixelRatio || 1, 2.5), w = Math.min(img.width, Math.round(BW * r)), h = Math.round(w * img.height / img.width);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, w, h);
+      if (img.close) img.close();
+      return c;
+    })();
+    cache.set(n, job); job.catch(() => { if (cache.get(n) === job) cache.delete(n); });
+    if (cache.size > 12) for (const k of cache.keys()) if (Math.abs(k - cur) > 5){ cache.delete(k); break; }
+    return job;
+  }
+  async function paintBase(n){
+    base.querySelectorAll('canvas,.wait').forEach(e => e.remove());
+    if (n < 1 || n > doc.numPages){ return; }
+    const src = await pageCanvas(n);
+    const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+    c.getContext('2d').drawImage(src, 0, 0); base.insertBefore(c, dimEl);
+  }
+  // the turning page is drawn on one canvas: thin columns bent around the spine (right edge), no seams
+  const tctx = turnEl.getContext('2d'); let leafSrc = null;
+  async function buildLeaf(n){ leafSrc = await pageCanvas(n);
+    const r = Math.min(devicePixelRatio || 1, 2.5); turnEl.width = Math.round(BW * r); turnEl.height = Math.round(BH * 1.16 * r);
+    setTurn(0); }
+  function clearLeaf(){ leafSrc = null; tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.clearRect(0, 0, turnEl.width, turnEl.height); }
+  function setTurn(p){
+    dimEl.style.opacity = (Math.sin(Math.PI * p) * 0.9).toFixed(3);
+    if (!leafSrc) return;
+    const r = Math.min(devicePixelRatio || 1, 2.5);
+    tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.clearRect(0, 0, turnEl.width, turnEl.height);
+    tctx.imageSmoothingQuality = 'high';
+    const COLS = 64, w = BW / COLS, top0 = BH * 0.08, P = BW * 3.2;
+    const theta = p * Math.PI, bend = 0.7 * Math.sin(Math.PI * Math.min(1, p * 1.15));
+    const kx = leafSrc.width / BW;
+    let X = 0, Z = 0;                          // distance from the spine, height above the page
+    let ea = Math.round(BW * r);               // device-pixel edge shared with the previous column: no gaps, no overlaps
+    for (let k = 0; k < COLS; k++){
+      const phi = theta * ((1 - bend) + bend * Math.pow((k + 1) / COLS, 2));
+      const c = Math.cos(phi), sn = Math.sin(phi);
+      const X2 = X + w * c, Z2 = Z + w * sn;
+      const s1 = P / (P - Z), s2 = P / (P - Z2);
+      const eb = Math.round((BW - X2 * s2) * r);
+      const sm = (s1 + s2) / 2, h = Math.round(BH * sm * r), y = Math.round((top0 + (BH - BH * sm) / 2) * r);
+      const left = Math.min(ea, eb), width = Math.abs(ea - eb);
+      if (width > 0){
+        if (c >= 0) tctx.drawImage(leafSrc, (BW - (k + 1) * w) * kx, 0, w * kx, leafSrc.height, left, y, width, h);
+        else { tctx.fillStyle = '#f5ece2'; tctx.fillRect(left, y, width, h); }
+        const shade = 0.16 * sn + 0.22 * Math.max(0, -c);
+        if (shade > 0.003){ tctx.fillStyle = 'rgba(58,26,34,' + shade.toFixed(3) + ')'; tctx.fillRect(left, y, width, h); }
+        const shine = 0.10 * Math.max(0, sn) * Math.max(0, c) * Math.max(0, 1 - Math.abs(phi - 0.6));
+        if (shine > 0.003){ tctx.fillStyle = 'rgba(255,255,255,' + shine.toFixed(3) + ')'; tctx.fillRect(left, y, width, h); }
+      }
+      ea = eb;
+      X = X2; Z = Z2;
+    }
+  }
+  function animateTo(from, to, ms){
+    return new Promise(res => {
+      if (still){ setTurn(to); return res(); }
+      const t0 = performance.now();
+      const step = t => { const k = Math.min(1, (t - t0) / ms), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        setTurn(from + (to - from) * e); k < 1 ? requestAnimationFrame(step) : res(); };
+      requestAnimationFrame(step);
+    });
+  }
+  function label(){ countEl.textContent = ar(cur) + ' / ' + ar(doc.numPages);
+    nextBtn.disabled = cur >= doc.numPages; prevBtn.disabled = cur <= 1; }
+  function preload(){ for (const n of [cur + 1, cur - 1, cur + 2]) if (n >= 1 && n <= doc.numPages) pageCanvas(n); }
+
+  // start a turn: forward lifts the current page off the next one; backward brings the previous page back over
+  async function begin(dir){
+    const target = cur + dir; if (target < 1 || target > doc.numPages) return false;
+    if (dir > 0){ await paintBase(target); await buildLeaf(cur); setTurn(0); }
+    else { await paintBase(cur); await buildLeaf(target); setTurn(1); }
+    return true;
+  }
+  async function finish(dir, p){
+    const done = dir > 0 ? p > 0.35 : p < 0.65;
+    await animateTo(p, dir > 0 ? (done ? 1 : 0) : (done ? 0 : 1), 420 + 380 * (dir > 0 ? (done ? 1 - p : p) : (done ? p : 1 - p)));
+    if (done) cur += dir;
+    await paintBase(cur); clearLeaf(); dimEl.style.opacity = 0;
+    label(); preload();
+  }
+  async function step(dir){
+    if (busy || !doc) return; busy = true;
+    if (await begin(dir)){
+      await animateTo(dir > 0 ? 0 : 1, dir > 0 ? 1 : 0, 850);
+      cur += dir; await paintBase(cur); clearLeaf(); dimEl.style.opacity = 0; label(); preload();
+    }
+    busy = false;
+  }
+
+  // drag with the finger: moving right turns forward (an Arabic book opens right to left)
+  bookEl.addEventListener('pointerdown', e => {
+    if (busy || !doc) return;
+    drag = {x: e.clientX, y: e.clientY, dir: 0, p: 0, ready: false, t: performance.now()};
+    bookEl.setPointerCapture(e.pointerId);
+  });
+  bookEl.addEventListener('pointermove', async e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.dir){
+      if (Math.abs(dx) < 8) return;
+      drag.dir = dx > 0 ? 1 : -1; busy = true;
+      drag.ready = await begin(drag.dir);
+      if (!drag.ready){ busy = false; drag = null; return; }
+    }
+    if (!drag.ready) return;
+    const span = BW * 1.6;
+    drag.p = drag.dir > 0 ? Math.min(1, Math.max(0, dx / span)) : Math.min(1, Math.max(0, 1 + dx / span));
+    setTurn(drag.p);
+  });
+  const end = async e => {
+    if (!drag) return; const d = drag; drag = null;
+    if (!d.dir){                       // a simple tap: left half forward, right half back
+      const r = bookEl.getBoundingClientRect();
+      if (e.type === 'pointerup') step(e.clientX - r.left < r.width / 2 ? 1 : -1);
+      return;
+    }
+    if (!d.ready) return;
+    const fast = (performance.now() - d.t) < 260;
+    await finish(d.dir, fast ? (d.dir > 0 ? Math.max(d.p, 0.4) : Math.min(d.p, 0.6)) : d.p);
+    busy = false;
+  };
+  bookEl.addEventListener('pointerup', end);
+  bookEl.addEventListener('pointercancel', end);
+  nextBtn.addEventListener('click', () => step(1));
+  prevBtn.addEventListener('click', () => step(-1));
+  addEventListener('keydown', e => { if (e.key === 'ArrowLeft') step(1); if (e.key === 'ArrowRight') step(-1); });
+
+  function showNote(){
+    const note = document.getElementById('note'), lines = note.querySelectorAll('p,.orn');
+    note.hidden = false; let gone = false;
+    lines.forEach((l, i) => setTimeout(() => l.classList.add('on'), still ? 0 : 300 + i * 1600));
+    const go = () => { if (gone) return; gone = true; note.classList.add('out');
+      setTimeout(() => { note.hidden = true; openBook(); }, still ? 0 : 1000); };
+    setTimeout(go, still ? 6000 : 9500);
+    setTimeout(() => note.addEventListener('click', go), 1800);
+  }
+
+  /* ---------- sounds: each file loops forever, every pass melting into the next so the seam is never heard ---------- */
+  let actx = null;
+  function audio(){
+    if (!actx){
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (_){}
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (actx.state !== 'running') actx.resume();
+    return actx;
+  }
+  const fetched = {};
+  const fetchSound = url => fetched[url] || (fetched[url] = fetch(url + '?v=' + V).then(r => { if (!r.ok) throw new Error('net'); return r.arrayBuffer(); })
+    .catch(e => { delete fetched[url]; throw e; }));
+  // equal-power curves keep the loudness steady while one pass hands over to the next
+  const FADE_STEPS = 64, upCurve = new Float32Array(FADE_STEPS), downCurve = new Float32Array(FADE_STEPS);
+  for (let i = 0; i < FADE_STEPS; i++){ const x = i / (FADE_STEPS - 1); upCurve[i] = Math.sin(x * Math.PI / 2); downCurve[i] = Math.cos(x * Math.PI / 2); }
+  function makeLoop(btn, url, level, fade){
+    let master = null, buf = null, playing = false, timer = null, next = 0, loading = null, live = [];
+    function schedule(){
+      if (!playing) return;
+      const ctx = actx;
+      while (next < ctx.currentTime + 15){
+        const src = ctx.createBufferSource(), g = ctx.createGain(), d = buf.duration;
+        src.buffer = buf; src.connect(g); g.connect(master);
+        g.gain.setValueAtTime(0, ctx.currentTime);
+        g.gain.setValueCurveAtTime(upCurve, next, fade);
+        g.gain.setValueCurveAtTime(downCurve, next + d - fade, fade);
+        src.start(next); src.stop(next + d + .05); live.push(src);
+        src.onended = () => { live = live.filter(x => x !== src); };
+        next += d - fade;
+      }
+    }
+    btn.addEventListener('click', async () => {
+      try {
+        const ctx = audio();
+        if (!master){ master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); }
+        playing = !playing;
+        btn.classList.toggle('on', playing); btn.setAttribute('aria-pressed', String(playing));
+        const now = ctx.currentTime;
+        master.gain.cancelScheduledValues(now); master.gain.setValueAtTime(master.gain.value, now);
+        if (playing){
+          if (!buf){
+            btn.classList.add('wait');
+            loading = loading || fetchSound(url).then(ab => new Promise((ok, no) => ctx.decodeAudioData(ab.slice(0), ok, no))).then(b => { buf = b; })
+              .catch(e => { loading = null; throw e; });
+            try { await loading; } finally { btn.classList.remove('wait'); }
+            if (!playing) return;
+          }
+          if (next < ctx.currentTime + .05) next = ctx.currentTime + .05;
+          schedule(); clearInterval(timer); timer = setInterval(schedule, 4000);
+          master.gain.linearRampToValueAtTime(level, ctx.currentTime + 1.8);
+        } else {
+          master.gain.linearRampToValueAtTime(0, now + .9);
+          clearInterval(timer);
+          setTimeout(() => { if (playing) return; live.forEach(x => { try { x.stop(); } catch (_){} }); live = []; next = 0; }, 1000);
+        }
+      } catch (_){
+        playing = false; btn.classList.remove('on', 'wait'); btn.setAttribute('aria-pressed', 'false');
+      }
+    });
+  }
+  makeLoop(document.getElementById('sndNature'), 'nature.mp3', .8, 4);
+  makeLoop(document.getElementById('sndFire'), 'fire.mp3', .85, 5);
+
+  /* ---------- day / night ---------- */
+  const modeBtn = document.getElementById('mode'), themeMeta = document.querySelector('meta[name="theme-color"]');
+  function paintMode(){
+    const night = root.classList.contains('night');
+    modeBtn.setAttribute('aria-label', night ? 'الوضع النهاري' : 'الوضع الليلي');
+    themeMeta.setAttribute('content', night ? '#0a0d1f' : '#fdf8f2');
+    if (still) draw(0);
+  }
+  modeBtn.addEventListener('click', () => {
+    root.classList.toggle('night');
+    try { localStorage.setItem('ly-mode', root.classList.contains('night') ? 'night' : 'day'); } catch (_){}
+    paintMode();
+  });
+  paintMode();
+
+  async function openBook(){
+    const reader = document.getElementById('reader'), status = document.getElementById('status');
+    reader.hidden = false; requestAnimationFrame(() => reader.classList.add('show')); scrollTo(0, 0); document.documentElement.scrollTop = 0;
+
+    const dlBtn = document.getElementById('dl'); let pdfP = null;
+    dlBtn.addEventListener('click', async () => {
+      if (dlBtn.disabled) return;
+      dlBtn.disabled = true; const label0 = dlBtn.textContent; dlBtn.textContent = 'لحظة…';
+      try {
+        pdfP = pdfP || fetch('book.bin?v=' + V).then(r => { if (!r.ok) throw new Error('net'); return r.arrayBuffer(); })
+          .then(ab => decrypt(meta.f, new Uint8Array(ab))).catch(e => { pdfP = null; throw e; });
+        const pdf = await pdfP;
+        const dl = window.claude?.use ? await window.claude.use('downloads') : null;
+        const blob = new Blob([pdf], {type: 'application/pdf'});
+        if (dl) await dl.save({filename: 'ليل…يوم.pdf', data: blob});
+        else {
+          const url = URL.createObjectURL(blob), a = document.createElement('a');
+          a.href = url; a.download = 'ليل…يوم.pdf'; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+        }
+      } catch (_){}
+      finally { dlBtn.disabled = false; dlBtn.textContent = label0; }
+    });
+
+    doc = {numPages: meta.p.length};
+    for (let tries = 0; ; tries++){
+      try {
+        status.hidden = true; document.getElementById('stage').hidden = false; document.getElementById('nav').hidden = false;
+        fit(); await paintBase(1); label(); preload();
+        break;
+      } catch (_){
+        document.getElementById('stage').hidden = true; document.getElementById('nav').hidden = true;
+        status.hidden = false; status.textContent = 'لحظة… الصفحات تتفتح';
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+  }
+})();
+</script>
+</body>
+</html>
