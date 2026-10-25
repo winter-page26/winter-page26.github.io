@@ -109,12 +109,12 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
     </svg>
     <h1>ليل… يوم</h1>
     <p class="hint">هالباب ما ينفتح إلا بيومك</p>
-    <form class="lock" id="lock" autocomplete="off">
+    <form class="lock" id="lock" autocomplete="off" novalidate>
       <div class="pick">
         <label for="day">اليوم<select id="day" required><option value="">—</option></select></label>
         <label for="month">الشهر<select id="month" required><option value="">—</option></select></label>
       </div>
-      <label class="digits" for="tail">وآخر أربع أرقام من جوالك<input id="tail" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" required></label>
+      <label class="digits" for="tail">وآخر أربع أرقام من جوالك<input id="tail" inputmode="numeric" maxlength="8" autocomplete="off" autocorrect="off" spellcheck="false"></label>
       <button class="open" type="submit">فتح</button>
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
     </form>
@@ -188,7 +188,8 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
   for (let d = 1; d <= 31; d++) day.add(new Option(String(d), String(d)));
   months.forEach((m, i) => month.add(new Option(m, String(i + 1))));
   const msg = document.getElementById('msg'), form = document.getElementById('lock'), tail = document.getElementById('tail');
-  tail.addEventListener('input', () => { tail.value = tail.value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g, '').slice(0, 4); });
+  tail.addEventListener('input', () => { const v = digits(tail.value); if (v !== tail.value) tail.value = v; });
+  const digits = s => String(s || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9]/g, '').slice(0, 4);
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   let data = null, key = null, firstPage = null;
   const open = async part => new Uint8Array(await crypto.subtle.decrypt({name: 'AES-GCM', iv: b64(part.i)}, key, b64(part.c)));
@@ -204,10 +205,13 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
   form.addEventListener('submit', async e => {
     e.preventDefault();
     if (!day.value || !month.value){ msg.textContent = 'اختاري اليوم والشهر'; return; }
-    if (tail.value.length !== 4){ msg.textContent = 'اكتبي آخر أربع أرقام'; return; }
+    const code = digits(tail.value);
+    if (code.length !== 4){ msg.textContent = 'اكتبي آخر أربع أرقام'; return; }
     msg.textContent = '…';
-    try { firstPage = await unlock(month.value + '-' + day.value + '-' + tail.value); }
-    catch (_){
+    if (!window.crypto || !crypto.subtle){ msg.textContent = 'افتحي الرابط من Safari'; return; }
+    try { firstPage = await unlock(month.value + '-' + day.value + '-' + code); }
+    catch (err){
+      if (err && err.name && err.name !== 'OperationError'){ msg.textContent = 'صار خطأ (' + err.name + ')'; return; }
       msg.textContent = 'مو هذا يومك… جرّبي مرة ثانية';
       form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); return;
     }
