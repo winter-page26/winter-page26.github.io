@@ -2,14 +2,40 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#fdf8f2">
 <title>ليل… يوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap">
 <link rel="preload" href="meta.json?v=4" as="fetch" crossorigin>
-<script>try{if(localStorage.getItem('ly-mode')==='night')document.documentElement.classList.add('night')}catch(_){}</script>
+<script>
+/* which season is it? astronomical seasons from Meeus' equinox/solstice formulas (accurate to about a minute) */
+(function(){
+  var T=[[485,324.96,1934.136],[203,337.23,32964.467],[199,342.08,20.186],[182,27.85,445267.112],[156,73.14,45036.886],[136,171.52,22518.443],[77,222.54,65928.934],[74,296.72,3034.906],[70,243.58,9037.513],[58,119.81,33718.147],[52,297.17,150.678],[50,21.02,2281.226],[45,247.54,29929.562],[44,325.15,31555.956],[29,60.93,4443.417],[18,155.12,67555.328],[17,288.79,4562.452],[16,198.04,62894.029],[14,199.76,31436.921],[12,95.39,14577.848],[12,287.11,31931.756],[12,320.81,34777.259],[9,227.73,1222.114],[8,15.45,16859.074]];
+  var C=[[2451623.80984,365242.37404,0.05169,-0.00411,-0.00057],[2451716.56767,365241.62603,0.00325,0.00888,-0.00030],[2451810.21715,365242.01767,-0.11575,0.00337,0.00078],[2451900.05952,365242.74049,-0.06223,-0.00823,0.00032]];
+  var r=Math.PI/180;
+  function at(y,k){ // k: 0 March equinox, 1 June solstice, 2 September equinox, 3 December solstice -> ms (UTC)
+    var Y=(y-2000)/1000,a=C[k],J=a[0]+a[1]*Y+a[2]*Y*Y+a[3]*Y*Y*Y+a[4]*Y*Y*Y*Y,t=(J-2451545)/36525,W=(35999.373*t-2.47)*r;
+    var d=1+0.0334*Math.cos(W)+0.0007*Math.cos(2*W),S=0;
+    for(var i=0;i<T.length;i++)S+=T[i][0]*Math.cos((T[i][1]+T[i][2]*t)*r);
+    return (J+0.00001*S/d-2440587.5)*86400000-69000;
+  }
+  window.lySeason=function(now){
+    var y=new Date(now).getUTCFullYear(),mar=at(y,0),jun=at(y,1),sep=at(y,2),dec=at(y,3);
+    if(now<mar)return{s:'winter',next:dec,ends:mar};
+    if(now<jun)return{s:'spring',next:dec,ends:jun};
+    if(now<sep)return{s:'summer',next:dec,ends:sep};
+    if(now<dec)return{s:'autumn',next:dec,ends:dec};
+    return{s:'winter',next:at(y+1,3),ends:at(y+1,0)};
+  };
+  var info=lySeason(Date.now()),q=(location.search.match(/[?&]season=(winter|spring|summer|autumn)/)||[])[1];
+  if(q){info.s=q;info.forced=true;}
+  window.lyInfo=info;
+  var el=document.documentElement;el.classList.add('s-'+info.s);
+  try{var m=(location.search.match(/[?&]mode=(night|day)/)||[])[1]||localStorage.getItem('ly-mode');if(m==='night')el.classList.add('night')}catch(_){}
+})();
+</script>
 <style>
 [hidden]{display:none!important}
 body{margin:0}
@@ -26,6 +52,11 @@ body{margin:0}
   color-scheme:dark;
 }
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+/* a still page: nothing to scroll, nothing to zoom, nothing to select or copy */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{position:fixed;inset:0;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+img,canvas,svg{-webkit-user-drag:none;-webkit-touch-callout:none}
+.digits input{-webkit-user-select:text;user-select:text}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);overflow-x:hidden;transition:background-color 1.8s ease,color 1.8s ease}
 .sky,.nightsky{position:fixed;inset:0;pointer-events:none;z-index:0;transition:opacity 2.2s ease}
 .sky{background:radial-gradient(70% 45% at 15% 0%,#ece3f0,transparent 70%),radial-gradient(70% 50% at 100% 100%,#f6e4e6,transparent 70%),#fdf8f2}
@@ -49,7 +80,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--body);overflow-x
 /* door */
 #gate{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:min(12px,1.6vh);transition:opacity .8s ease,transform .8s ease}
 #gate.leaving{opacity:0;transform:translateY(-10px)}
-.lily{width:min(150px,40vw,17vh);color:var(--wine);animation:sway 6s ease-in-out infinite;transform-origin:50% 100%;transition:color 1.8s ease}
+.lily{width:min(150px,40vw,15vh);color:var(--wine);animation:sway 6s ease-in-out infinite;transform-origin:50% 100%;transition:color 1.8s ease}
 @keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
 h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,12vw,68px);line-height:1.2;margin:0;color:var(--wine);transition:color 1.8s ease}
 .hint{font-size:20px;color:var(--soft);margin:0;line-height:1.8}
@@ -69,6 +100,46 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
 .open:active{transform:translateY(1px)}
 .open:disabled{opacity:.7}
 .msg{min-height:1.8em;font-size:17px;color:var(--wine);margin:0}
+/* countdown to winter: small, soft, the digits roll over like falling snow */
+.winter{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:2px;color:var(--soft)}
+.winter .cap{font-size:15px;line-height:1.4}
+.winter .row{display:flex;gap:8px;direction:rtl}
+.winter .u{display:flex;flex-direction:column;align-items:center;min-width:46px;padding:4px 6px 2px;border:1px solid var(--line);border-radius:12px;
+  background:color-mix(in srgb,var(--white) 70%,transparent);transition:background-color 1.8s ease,border-color 1.8s ease}
+.winter .n{height:26px;width:100%;display:flex;justify-content:center;direction:ltr}
+.winter .dg{position:relative;width:.62em;font-size:21px;height:100%;overflow:hidden}
+.winter .dg span{position:absolute;inset:0;display:grid;place-items:center;font-size:inherit;line-height:1;color:var(--wine);font-variant-numeric:tabular-nums;transition:transform .55s cubic-bezier(.3,.7,.3,1),opacity .55s ease}
+.winter .dg span.in{transform:translateY(-70%);opacity:0}
+.winter .dg span.out{transform:translateY(70%);opacity:0}
+.winter .l{font-size:11.5px;line-height:1.3}
+.winter.done .row{display:none}
+.winter .q{display:none;font-size:14.5px;line-height:1.7;color:var(--soft);opacity:.9;margin-top:1px}
+.winter.done .cap{font-size:18px;color:var(--wine);transition:color 1.8s ease}
+.winter.done .q{display:block}
+/* shorter screens: the door tightens a little so the countdown always fits */
+@media (max-height:740px){
+  #gate{gap:8px}
+  .lily{width:min(120px,13vh)}
+  h1{font-size:clamp(40px,8.4vh,60px)}
+  .hint{font-size:18px;line-height:1.5}
+  .lock{gap:9px;margin-top:4px}
+  .pick label,.digits{gap:3px}
+  select{padding:7px 12px}
+  .digits input{padding:6px 12px}
+  .open{padding:6px 18px}
+  .msg{min-height:1.5em;font-size:16px}
+}
+@media (max-height:600px){
+  .lily{width:9vh}
+  h1{font-size:clamp(34px,7.4vh,48px)}
+  .hint{font-size:16px}
+  .pick label,.digits{font-size:13px}
+  select,.digits input{font-size:18px;padding:5px 12px}
+  .winter .cap{font-size:13px}
+  .winter .u{min-width:40px;padding:2px 5px 1px}
+  .winter .n{height:22px}
+  .winter .dg{font-size:18px}
+}
 
 /* a quiet note between the door and the book */
 #note{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;cursor:pointer;transition:opacity 1s ease}
@@ -91,6 +162,9 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
 .snd.wait{animation:breath 1s ease-in-out infinite}
 @keyframes breath{50%{opacity:.25}}
 .dl,.mode{height:36px;display:inline-flex;align-items:center;justify-content:center}
+.dl.ready{animation:ready 1.6s ease-in-out infinite;font-size:12.5px;padding:0 9px}
+.bar:has(.dl.ready) .t{font-size:clamp(17px,5vw,24px)}
+@keyframes ready{50%{box-shadow:0 0 0 4px var(--blush)}}
 .dl{font-family:var(--body);font-weight:700;font-size:16px;color:var(--wine);padding:0 13px;white-space:nowrap}
 .mode{width:50px;padding:0;color:var(--wine);position:relative}
 .mode svg{position:absolute;width:22px;height:22px;transition:opacity .9s ease,transform .9s ease}
@@ -112,13 +186,49 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
 .status{font-size:16px;color:var(--soft);margin:0}
 
 @media (prefers-reduced-motion:reduce){.lily{animation:none}#gate,#reader,#note,#note p,.sky,.nightsky,.moon,body,.book{transition:none}}
+/* ---------- seasons: autumn is the original look; winter, spring and summer each bring their own air ---------- */
+:root.s-winter{--paper:#f6f9fd;--blush:#e8e9f6;--lilac:#dce9f7;--wine:#7a2a44;--ink:#2d3446;--soft:#8a9bb6;--line:#d8e2f0;--white:#ffffff;--shadow:rgba(40,60,100,.16)}
+:root.s-winter.night{--paper:#0a1428;--blush:#1b2442;--lilac:#132243;--wine:#f1c6d2;--ink:#e6edf8;--soft:#9db0cf;--line:#283a5e;--white:#13203b;--shadow:rgba(0,0,0,.5)}
+:root.s-spring{--paper:#fbfaf2;--blush:#f5e5ec;--lilac:#ece5f6;--wine:#7b2d52;--ink:#33302b;--soft:#9c8fb0;--line:#e6dfec;--white:#ffffff;--shadow:rgba(70,60,40,.15)}
+:root.s-spring.night{--paper:#0d1918;--blush:#1d2b27;--lilac:#172331;--wine:#ecc3d8;--ink:#e6ede5;--soft:#a4b6a7;--line:#2a3c38;--white:#15221f;--shadow:rgba(0,0,0,.5)}
+:root.s-summer{--paper:#fff8ee;--blush:#fbe4cf;--lilac:#ffe8c6;--wine:#8c3424;--ink:#3b2a21;--soft:#c18c66;--line:#f2dcc2;--white:#ffffff;--shadow:rgba(120,70,30,.16)}
+:root.s-summer.night{--paper:#110e22;--blush:#2c1c2e;--lilac:#201935;--wine:#f7cba9;--ink:#f1e7dc;--soft:#c6a690;--line:#3a2d46;--white:#1c172f;--shadow:rgba(0,0,0,.5)}
+
+.s-winter .sky{background:radial-gradient(70% 45% at 15% 0%,#dfeafa,transparent 70%),radial-gradient(70% 50% at 100% 100%,#ebe6f7,transparent 70%),linear-gradient(#f8fbfe,#eef3fa)}
+.s-winter .nightsky{background:radial-gradient(42% 26% at 15% 0%,rgba(200,220,255,.22),transparent 70%),radial-gradient(80% 45% at 80% 100%,rgba(90,110,190,.28),transparent 70%),linear-gradient(#050d24 0%,#0c1a3c 58%,#17244a 100%)}
+.s-spring .sky{background:radial-gradient(70% 45% at 15% 0%,#fff1d8,transparent 70%),radial-gradient(70% 50% at 100% 100%,#e4f0dc,transparent 70%),radial-gradient(60% 40% at 0% 100%,#f3e6f2,transparent 70%),#fbfaf2}
+.s-spring .nightsky{background:radial-gradient(42% 26% at 15% 0%,rgba(230,240,220,.16),transparent 70%),radial-gradient(80% 50% at 100% 100%,rgba(70,120,90,.26),transparent 70%),linear-gradient(#07131a 0%,#0e1f25 58%,#16262a 100%)}
+.s-summer .sky{background:radial-gradient(60% 40% at 15% 0%,#ffdca0,transparent 72%),radial-gradient(70% 50% at 100% 100%,#fbd6c0,transparent 70%),linear-gradient(#fff6e6,#fff3e8)}
+.s-summer .nightsky{background:radial-gradient(42% 26% at 15% 0%,rgba(255,230,190,.18),transparent 70%),radial-gradient(90% 40% at 50% 100%,rgba(255,140,90,.20),transparent 70%),linear-gradient(#0a081e 0%,#191332 55%,#2e1c34 100%)}
+
+/* winter: a breath of frost on the edges of the glass */
+.frost{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity 2.2s ease;
+  box-shadow:inset 0 0 70px 22px rgba(255,255,255,.95),inset 0 0 160px 40px rgba(214,228,248,.55)}
+.s-winter .frost{opacity:1}
+.s-winter.night .frost{box-shadow:inset 0 0 70px 18px rgba(170,195,240,.14),inset 0 0 160px 40px rgba(120,150,220,.10)}
+.s-winter select,.s-winter .digits input,.s-winter .winter .u{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:color-mix(in srgb,var(--white) 78%,transparent)}
+
+/* summer: slow sun rays turning in the bright corner */
+.rays{position:fixed;left:15%;top:0;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;pointer-events:none;z-index:0;opacity:0;transition:opacity 2.2s ease;
+  background:repeating-conic-gradient(from 0deg,rgba(255,214,150,.20) 0deg 5deg,transparent 5deg 17deg);
+  -webkit-mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 25%,transparent 55%);mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 25%,transparent 55%);
+  animation:turn 120s linear infinite}
+@keyframes turn{to{transform:rotate(360deg)}}
+.s-summer .rays{opacity:1}
+.s-summer.night .rays{opacity:0}
+
+.s-winter .moon{background:radial-gradient(circle at 38% 36%,#ffffff 0%,#e9eef8 55%,#cfd8ea 100%);box-shadow:0 0 18px 4px rgba(230,240,255,.4),0 0 60px 18px rgba(170,195,255,.18),0 0 140px 50px rgba(150,180,255,.09)}
+.s-summer .moon{background:radial-gradient(circle at 38% 36%,#fff6e0 0%,#f6e2bb 55%,#e6c999 100%);box-shadow:0 0 18px 4px rgba(255,226,180,.38),0 0 60px 18px rgba(255,190,140,.16),0 0 140px 50px rgba(255,170,120,.08)}
+@media (prefers-reduced-motion:reduce){.rays{animation:none}.frost,.rays{transition:none}}
 </style>
 </head>
 <body>
 
 <div class="sky" aria-hidden="true"></div>
 <div class="nightsky" aria-hidden="true"></div>
+<div class="rays" aria-hidden="true"></div>
 <div class="moon" aria-hidden="true"></div>
+<div class="frost" aria-hidden="true"></div>
 <canvas id="snow" aria-hidden="true"></canvas>
 
 <main class="wrap">
@@ -150,6 +260,16 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
       <button class="open" type="submit">فتح</button>
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
     </form>
+    <div class="winter" id="winter" aria-label="العد التنازلي للشتاء">
+      <div class="cap">❄︎ باقي على الشتاء</div>
+      <div class="q">"ليلة شتا، وبرد نجد اللي يقرص الوجه…"</div>
+      <div class="row">
+        <div class="u"><div class="n" data-k="d"></div><div class="l">يوم</div></div>
+        <div class="u"><div class="n" data-k="h"></div><div class="l">ساعة</div></div>
+        <div class="u"><div class="n" data-k="m"></div><div class="l">دقيقة</div></div>
+        <div class="u"><div class="n" data-k="s"></div><div class="l">ثانية</div></div>
+      </div>
+    </div>
   </section>
 
   <section id="note" hidden>
@@ -233,25 +353,56 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
   });
   getMeta().catch(() => {});
 
-  /* ---------- soft snow, a few pink petals, and at night a handful of quiet stars ---------- */
+  /* ---------- the air of each season: snow and petals, crystals, lavender and butterflies, golden dust; stars at night ---------- */
   const cv = document.getElementById('snow'), cx = cv.getContext('2d');
-  let W, H; const flakes = [], petals = [], stars = [];
+  let W, H, flakes = [], petals = [], stars = [], crystals = [], buds = [], flies = [], motes = [], shoot = null, nextShoot = 0;
   let nightAmt = root.classList.contains('night') ? 1 : 0;
+  const seasonNow = () => (root.className.match(/\bs-(\w+)/) || [])[1] || 'autumn';
   function size(){ const r = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
     cv.width = W * r; cv.height = H * r; cx.setTransform(r, 0, 0, r, 0, 0); }
   size(); addEventListener('resize', () => { size(); fit(); if (still) draw(0); });
   const rnd = (a, b) => a + Math.random() * (b - a);
-  for (let i = 0; i < 60; i++) flakes.push({x: rnd(0, 1), y: rnd(0, 1), r: rnd(1, 3.2), s: rnd(.2, .6), w: rnd(0, 6.3)});
-  for (let i = 0; i < 6; i++) petals.push({x: rnd(0, 1), y: rnd(-1, 1), s: rnd(.25, .45), a: rnd(0, 6.3), k: rnd(.6, 1)});
-  for (let i = 0; i < 34; i++){
-    let x, y; do { x = rnd(.03, .97); y = Math.pow(Math.random(), 1.4) * .78; } while (Math.hypot(x - .15, y * 1.6) < .16);   // keep the moon's corner clear
-    stars.push({x, y, r: rnd(.5, 1.35), sp: rnd(.35, 1.1), ph: rnd(0, 6.3), base: rnd(.25, .55)});
+  const many = (n, f) => Array.from({length: n}, f);
+  function populate(){
+    const s = seasonNow();
+    flakes = many(s === 'winter' ? 95 : s === 'autumn' ? 60 : 0, () => ({x: rnd(0, 1), y: rnd(0, 1), r: rnd(1, 3.2), s: rnd(.2, .6), w: rnd(0, 6.3)}));
+    crystals = many(s === 'winter' ? 11 : 0, () => ({x: rnd(0, 1), y: rnd(0, 1), z: rnd(5, 10), s: rnd(.12, .3), a: rnd(0, 6.3), v: rnd(-.006, .006), w: rnd(0, 6.3)}));
+    petals = many({winter: 3, autumn: 6, spring: 11, summer: 3}[s], () => ({x: rnd(0, 1), y: rnd(-1, 1), s: rnd(.25, .45), a: rnd(0, 6.3), k: rnd(.6, 1)}));
+    buds = many(s === 'spring' ? 16 : 0, () => ({x: rnd(0, 1), y: rnd(-1, 1), s: rnd(.18, .34), a: rnd(0, 6.3), k: rnd(.7, 1.1)}));
+    flies = many(s === 'spring' ? 12 : 0, (_, i) => ({x: rnd(.05, .95), y: rnd(.1, .9), d: rnd(0, 6.3), sp: rnd(.12, .25), ph: rnd(0, 6.3), bf: i < 4}));
+    motes = many(s === 'summer' ? 38 : 0, () => ({x: rnd(0, 1), y: rnd(0, 1), r: rnd(.6, 1.8), s: rnd(.05, .16), ph: rnd(0, 6.3), sp: rnd(.6, 1.6)}));
+    stars = [];
+    for (let i = 0; i < (s === 'summer' ? 58 : 34); i++){
+      let x, y; do { x = rnd(.03, .97); y = Math.pow(Math.random(), 1.4) * .78; } while (Math.hypot(x - .15, y * 1.6) < .16);
+      stars.push({x, y, r: rnd(.5, 1.35), sp: rnd(.35, 1.1), ph: rnd(0, 6.3), base: rnd(.25, .55)});
+    }
+    shoot = null; nextShoot = performance.now() + rnd(6000, 12000);
+  }
+  populate();
+  function crystal(x, y, z, a, alpha){
+    cx.save(); cx.translate(x, y); cx.rotate(a);
+    cx.strokeStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')'; cx.lineWidth = 1.1; cx.lineCap = 'round';
+    cx.shadowColor = 'rgba(150,180,230,' + (alpha * .9).toFixed(3) + ')'; cx.shadowBlur = 3;
+    cx.beginPath();
+    for (let k = 0; k < 6; k++){
+      cx.moveTo(0, 0); cx.lineTo(0, -z);
+      cx.moveTo(0, -z * .55); cx.lineTo(-z * .26, -z * .78); cx.moveTo(0, -z * .55); cx.lineTo(z * .26, -z * .78);
+      cx.moveTo(0, -z * .3); cx.lineTo(-z * .17, -z * .45); cx.moveTo(0, -z * .3); cx.lineTo(z * .17, -z * .45);
+      cx.rotate(Math.PI / 3);
+    }
+    cx.stroke(); cx.restore();
+  }
+  function petal(p, color){
+    cx.save(); cx.translate(p.x * W + Math.sin(p.a * 2) * 26, p.y * H); cx.rotate(p.a); cx.scale(p.k, p.k);
+    cx.fillStyle = color;
+    cx.beginPath(); cx.moveTo(0, -9); cx.bezierCurveTo(8, -5, 6, 7, 0, 10); cx.bezierCurveTo(-6, 7, -8, -5, 0, -9); cx.fill();
+    cx.restore();
   }
   function draw(t){
     const target = root.classList.contains('night') ? 1 : 0;
     nightAmt = still ? target : nightAmt + (target - nightAmt) * .035;
     if (Math.abs(target - nightAmt) < .002) nightAmt = target;
-    const s = (t || 0) / 1000;
+    const s = (t || 0) / 1000, day = 1 - nightAmt, season = seasonNow(), move = !still;
     cx.clearRect(0, 0, W, H);
     if (nightAmt > 0){
       for (const st of stars){
@@ -259,30 +410,141 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
         const x = st.x * W, y = st.y * H;
         cx.fillStyle = 'rgba(255,247,232,' + a.toFixed(3) + ')';
         cx.beginPath(); cx.arc(x, y, st.r, 0, 6.283); cx.fill();
-        if (st.r > 1.05){                          // the brighter ones get a faint glint
+        if (st.r > 1.05){
           const g = st.r * (2.6 + 2.4 * tw);
           cx.strokeStyle = 'rgba(255,247,232,' + (a * .35).toFixed(3) + ')'; cx.lineWidth = .6;
           cx.beginPath(); cx.moveTo(x - g, y); cx.lineTo(x + g, y); cx.moveTo(x, y - g); cx.lineTo(x, y + g); cx.stroke();
         }
       }
+      // now and then a star falls on summer and winter nights
+      if ((season === 'summer' || season === 'winter') && move){
+        const now = performance.now();
+        if (!shoot && now > nextShoot) shoot = {x: rnd(.35, .95) * W, y: rnd(.04, .3) * H, t0: now, len: rnd(90, 150)};
+        if (shoot){
+          const k = (now - shoot.t0) / 900;
+          if (k >= 1){ shoot = null; nextShoot = now + rnd(9000, 17000); }
+          else {
+            const hx = shoot.x - k * 260, hy = shoot.y + k * 120, a = nightAmt * Math.sin(Math.PI * k);
+            const g = cx.createLinearGradient(hx, hy, hx + shoot.len, hy - shoot.len * .46);
+            g.addColorStop(0, 'rgba(255,250,235,' + a.toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,250,235,0)');
+            cx.strokeStyle = g; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(hx, hy); cx.lineTo(hx + shoot.len, hy - shoot.len * .46); cx.stroke();
+          }
+        }
+      }
     }
+    // summer: warm dust drifting up through the light
+    for (const m of motes){
+      if (move){ m.y -= m.s / H * 1.2; m.x += Math.sin(s * .3 + m.ph) * .00012; if (m.y < -.02){ m.y = 1.02; m.x = Math.random(); } }
+      const tw = .5 + .5 * Math.sin(s * m.sp + m.ph), a = (.25 + .5 * tw) * (day * .9 + nightAmt * .45);
+      const col = nightAmt > .5 ? '255,205,150' : '255,200,120';
+      cx.fillStyle = 'rgba(' + col + ',' + (a * .35).toFixed(3) + ')'; cx.beginPath(); cx.arc(m.x * W, m.y * H, m.r * 3, 0, 6.283); cx.fill();
+      cx.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')'; cx.beginPath(); cx.arc(m.x * W, m.y * H, m.r, 0, 6.283); cx.fill();
+    }
+    // snow (autumn and winter)
     const ring = 'rgba(' + Math.round(185 + 70 * nightAmt) + ',' + Math.round(139 + 116 * nightAmt) + ',' + Math.round(147 + 108 * nightAmt) + ',' + (.35 - .23 * nightAmt).toFixed(3) + ')';
+    const ringW = 'rgba(' + Math.round(140 + 100 * nightAmt) + ',' + Math.round(165 + 80 * nightAmt) + ',' + Math.round(205 + 50 * nightAmt) + ',' + (.45 - .3 * nightAmt).toFixed(3) + ')';
     for (const f of flakes){
-      if (!still){ f.y += f.s / H * 1.4; f.w += .012; if (f.y > 1.02){ f.y = -.02; f.x = Math.random(); } }
+      if (move){ f.y += f.s / H * (season === 'winter' ? 1.7 : 1.4); f.w += .012; if (f.y > 1.02){ f.y = -.02; f.x = Math.random(); } }
       const x = f.x * W + Math.sin(f.w) * 10;
       cx.beginPath(); cx.fillStyle = 'rgba(255,255,255,' + (.95 - .1 * nightAmt).toFixed(3) + ')'; cx.arc(x, f.y * H, f.r, 0, 6.283); cx.fill();
-      cx.lineWidth = .6; cx.strokeStyle = ring; cx.stroke();
+      cx.lineWidth = .6; cx.strokeStyle = season === 'winter' ? ringW : ring; cx.stroke();
     }
-    for (const p of petals){
-      if (!still){ p.y += p.s / H * 1.1; p.a += .006; if (p.y > 1.05){ p.y = -.05; p.x = Math.random(); } }
-      cx.save(); cx.translate(p.x * W + Math.sin(p.a * 2) * 26, p.y * H); cx.rotate(p.a); cx.scale(p.k, p.k);
-      cx.fillStyle = 'rgba(232,160,175,' + (.7 - .12 * nightAmt).toFixed(3) + ')';
-      cx.beginPath(); cx.moveTo(0, -9); cx.bezierCurveTo(8, -5, 6, 7, 0, 10); cx.bezierCurveTo(-6, 7, -8, -5, 0, -9); cx.fill();
+    for (const c of crystals){
+      if (move){ c.y += c.s / H * 1.3; c.a += c.v; c.w += .01; if (c.y > 1.04){ c.y = -.04; c.x = Math.random(); } }
+      crystal(c.x * W + Math.sin(c.w) * 14, c.y * H, c.z, c.a, .9 - .15 * nightAmt);
+    }
+    // spring: lavender buds drifting down
+    for (const b of buds){
+      if (move){ b.y += b.s / H * 1.1; b.a += .008; if (b.y > 1.05){ b.y = -.05; b.x = Math.random(); } }
+      cx.save(); cx.translate(b.x * W + Math.sin(b.a * 1.7) * 22, b.y * H); cx.rotate(Math.sin(b.a) * .8); cx.scale(b.k, b.k);
+      cx.strokeStyle = 'rgba(120,150,110,' + (.55 - .2 * nightAmt).toFixed(3) + ')'; cx.lineWidth = .8;
+      cx.beginPath(); cx.moveTo(0, 7); cx.lineTo(0, -6); cx.stroke();
+      cx.fillStyle = 'rgba(158,124,204,' + (.8 - .25 * nightAmt).toFixed(3) + ')';
+      for (let j = 0; j < 4; j++){ cx.beginPath(); cx.ellipse((j % 2 ? 1.3 : -1.3), -5 + j * 2.4, 1.6, 2.2, 0, 0, 6.283); cx.fill(); }
       cx.restore();
+    }
+    // petals of the lily
+    const pc = {spring: 'rgba(246,196,212,', summer: 'rgba(240,172,128,', winter: 'rgba(232,160,175,', autumn: 'rgba(232,160,175,'}[season];
+    for (const p of petals){
+      if (move){ p.y += p.s / H * 1.1; p.a += .006; if (p.y > 1.05){ p.y = -.05; p.x = Math.random(); } }
+      petal(p, pc + (.7 - .12 * nightAmt).toFixed(3) + ')');
+    }
+    // spring: butterflies by day, fireflies by night
+    for (const f of flies){
+      if (move){ f.d += Math.sin(s * .7 + f.ph) * .02; f.x += Math.cos(f.d) * f.sp / W * 2.2; f.y += Math.sin(f.d) * f.sp / H * 1.6;
+        if (f.x < -.05) f.x = 1.05; if (f.x > 1.05) f.x = -.05; if (f.y < .05) f.d = Math.abs(f.d); if (f.y > .95) f.d = -Math.abs(f.d); }
+      const x = f.x * W, y = f.y * H;
+      if (f.bf && day > .02){
+        const flap = Math.abs(Math.sin(s * 7 + f.ph)) * .8 + .2;
+        cx.save(); cx.translate(x, y); cx.rotate(Math.cos(f.d) > 0 ? .3 : -.3); cx.globalAlpha = day * .85;
+        cx.fillStyle = f.ph > 3 ? 'rgba(214,122,156,.9)' : 'rgba(176,146,214,.9)';
+        for (const side of [-1, 1]){
+          cx.beginPath(); cx.ellipse(side * 4.2 * flap, -2, 4.4 * flap, 3.4, side * .5, 0, 6.283); cx.fill();
+          cx.beginPath(); cx.ellipse(side * 3.2 * flap, 2.6, 3 * flap, 2.3, -side * .4, 0, 6.283); cx.fill();
+        }
+        cx.fillStyle = 'rgba(80,50,60,.8)'; cx.fillRect(-.5, -4, 1, 8);
+        cx.restore();
+      }
+      if (nightAmt > .02){
+        const glow = (.5 + .5 * Math.sin(s * 1.6 + f.ph * 3)) * nightAmt;
+        const g = cx.createRadialGradient(x, y, 0, x, y, 9);
+        g.addColorStop(0, 'rgba(226,255,160,' + (glow * .9).toFixed(3) + ')'); g.addColorStop(1, 'rgba(226,255,160,0)');
+        cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, 9, 0, 6.283); cx.fill();
+      }
     }
     if (!still) requestAnimationFrame(draw);
   }
   still ? draw(0) : requestAnimationFrame(draw);
+
+  /* ---------- keep the page still: no pinch zoom, no double-tap zoom, no dragging the page, no copying ---------- */
+  const isField = el => el && el.closest && el.closest('input,select,textarea');
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), {passive: false}));
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1 || !isField(e.target)) e.preventDefault(); }, {passive: false});
+  document.addEventListener('dblclick', e => e.preventDefault(), {passive: false});
+  addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, {passive: false});
+  ['copy', 'cut', 'contextmenu', 'selectstart', 'dragstart'].forEach(ev => document.addEventListener(ev, e => { if (!isField(e.target)) e.preventDefault(); }));
+  addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && /^[acsp+=\-0]$/i.test(e.key) && !isField(e.target)) e.preventDefault(); });
+
+  /* ---------- countdown to winter: always the next December solstice; all through winter, a greeting instead ---------- */
+  (() => {
+    const info = window.lyInfo || {s: 'autumn', next: Date.UTC(2026, 11, 21, 20, 50)}, WINTER = info.next, box = document.getElementById('winter');
+    const AR = '٠١٢٣٤٥٦٧٨٩', slots = {};
+    box.querySelectorAll('.n').forEach(n => {
+      slots[n.dataset.k] = (n.dataset.k === 'd' ? [0, 1, 2] : [0, 1]).map(() => { const d = document.createElement('div'); d.className = 'dg'; n.appendChild(d); return {el: d, v: null}; });
+    });
+    function roll(slot, ch){                        // only the digit that really changed falls into place
+      if (slot.v === ch) return;
+      const first = slot.v === null; slot.v = ch;
+      const old = slot.el.querySelector('span:not(.out)');
+      const s = document.createElement('span'); s.textContent = ch;
+      if (!first && !still){ s.className = 'in'; slot.el.appendChild(s); requestAnimationFrame(() => requestAnimationFrame(() => s.className = '')); }
+      else slot.el.appendChild(s);
+      if (old){ if (first || still) old.remove(); else { old.className = 'out'; setTimeout(() => old.remove(), 600); } }
+    }
+    function put(k, v){
+      const sl = slots[k], txt = String(Math.min(v, sl.length === 3 ? 999 : 99)).padStart(sl.length, '0');
+      sl.forEach((slot, i) => {
+        const lead = sl.length === 3 && i === 0 && v < 100;           // a third digit only when the days need it
+        slot.el.style.display = lead ? 'none' : '';
+        roll(slot, AR[txt[i]]);
+      });
+    }
+    function tick(){
+      let left = info.s === 'winter' ? 0 : Math.max(0, Math.floor((WINTER - Date.now()) / 1000));
+      if (!left){
+        box.classList.add('done'); box.querySelector('.cap').textContent = 'وصل الشتاء… عساه يلقاك بخير ودفا ❄︎';
+        if (info.s !== 'winter' && !info.forced){                    // winter arrives while she is here: the page changes with it
+          info.s = 'winter'; root.classList.remove('s-autumn', 's-spring', 's-summer'); root.classList.add('s-winter'); populate(); paintMode();
+        }
+        return;
+      }
+      put('d', Math.floor(left / 86400)); left %= 86400;
+      put('h', Math.floor(left / 3600)); left %= 3600;
+      put('m', Math.floor(left / 60)); put('s', left % 60);
+      setTimeout(tick, 1000 - Date.now() % 1000 + 5);
+    }
+    tick();
+  })();
 
   /* ---------- lock ---------- */
   const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -567,7 +829,7 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
   function paintMode(){
     const night = root.classList.contains('night');
     modeBtn.setAttribute('aria-label', night ? 'الوضع النهاري' : 'الوضع الليلي');
-    themeMeta.setAttribute('content', night ? '#0a0d1f' : '#fdf8f2');
+    setTimeout(() => themeMeta.setAttribute('content', getComputedStyle(root).getPropertyValue('--paper').trim() || (night ? '#0a0d1f' : '#fdf8f2')), 50);
     if (still) draw(0);
   }
   modeBtn.addEventListener('click', () => {
@@ -581,25 +843,25 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
     const reader = document.getElementById('reader'), status = document.getElementById('status');
     reader.hidden = false; requestAnimationFrame(() => reader.classList.add('show')); scrollTo(0, 0); document.documentElement.scrollTop = 0;
 
-    const dlBtn = document.getElementById('dl'); let pdfP = null;
-    dlBtn.addEventListener('click', async () => {
-      if (dlBtn.disabled) return;
-      dlBtn.disabled = true; const label0 = dlBtn.textContent; dlBtn.textContent = 'لحظة…';
-      try {
-        pdfP = pdfP || fetch('book.bin?v=' + V).then(r => { if (!r.ok) throw new Error('net'); return r.arrayBuffer(); })
-          .then(ab => decrypt(meta.f, new Uint8Array(ab))).catch(e => { pdfP = null; throw e; });
-        const pdf = await pdfP;
-        const dl = window.claude?.use ? await window.claude.use('downloads') : null;
-        const blob = new Blob([pdf], {type: 'application/pdf'});
-        if (dl) await dl.save({filename: 'ليل…يوم.pdf', data: blob});
-        else {
-          const url = URL.createObjectURL(blob), a = document.createElement('a');
-          a.href = url; a.download = 'ليل…يوم.pdf'; document.body.appendChild(a); a.click(); a.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 60000);
-        }
-      } catch (_){}
-      finally { dlBtn.disabled = false; dlBtn.textContent = label0; }
+    // Safari only saves a file inside the tap itself, so the book is decrypted ahead of time and handed over instantly
+    const dlBtn = document.getElementById('dl'), label0 = dlBtn.textContent; let pdfP = null, pdfUrl = null;
+    const prepPdf = () => pdfP || (pdfP = fetch('book.bin?v=' + V).then(r => { if (!r.ok) throw new Error('net'); return r.arrayBuffer(); })
+      .then(ab => decrypt(meta.f, new Uint8Array(ab)))
+      .then(pdf => { pdfUrl = URL.createObjectURL(new Blob([pdf], {type: 'application/pdf'})); return pdfUrl; })
+      .catch(e => { pdfP = null; throw e; }));
+    dlBtn.addEventListener('click', () => {
+      if (pdfUrl){
+        dlBtn.classList.remove('ready'); dlBtn.textContent = label0;
+        const a = document.createElement('a'); a.href = pdfUrl; a.download = 'ليل…يوم.pdf'; a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); a.remove();
+        return;
+      }
+      if (dlBtn.dataset.wait) return;
+      dlBtn.dataset.wait = '1'; dlBtn.textContent = 'لحظة…';
+      prepPdf().then(() => { dlBtn.classList.add('ready'); dlBtn.textContent = 'الكتاب جاهز اضغط للتحميل'; }, () => { dlBtn.textContent = label0; })
+        .finally(() => { delete dlBtn.dataset.wait; });
     });
+    upTo(pagesBuf.length).then(prepPdf).catch(() => {});
 
     doc = {numPages: meta.p.length};
     for (let tries = 0; ; tries++){
