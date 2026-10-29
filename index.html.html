@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#fdf8f2">
+<title>ليل… يوم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap">
+<link rel="preload" href="meta.json?v=8" as="fetch" crossorigin>
+<script>
+/* which season is it? astronomical seasons from Meeus' equinox/solstice formulas (accurate to about a minute) */
+(function(){
+  var T=[[485,324.96,1934.136],[203,337.23,32964.467],[199,342.08,20.186],[182,27.85,445267.112],[156,73.14,45036.886],[136,171.52,22518.443],[77,222.54,65928.934],[74,296.72,3034.906],[70,243.58,9037.513],[58,119.81,33718.147],[52,297.17,150.678],[50,21.02,2281.226],[45,247.54,29929.562],[44,325.15,31555.956],[29,60.93,4443.417],[18,155.12,67555.328],[17,288.79,4562.452],[16,198.04,62894.029],[14,199.76,31436.921],[12,95.39,14577.848],[12,287.11,31931.756],[12,320.81,34777.259],[9,227.73,1222.114],[8,15.45,16859.074]];
+  var C=[[2451623.80984,365242.37404,0.05169,-0.00411,-0.00057],[2451716.56767,365241.62603,0.00325,0.00888,-0.00030],[2451810.21715,365242.01767,-0.11575,0.00337,0.00078],[2451900.05952,365242.74049,-0.06223,-0.00823,0.00032]];
+  var r=Math.PI/180;
+  function at(y,k){ // k: 0 March equinox, 1 June solstice, 2 September equinox, 3 December solstice -> ms (UTC)
+    var Y=(y-2000)/1000,a=C[k],J=a[0]+a[1]*Y+a[2]*Y*Y+a[3]*Y*Y*Y+a[4]*Y*Y*Y*Y,t=(J-2451545)/36525,W=(35999.373*t-2.47)*r;
+    var d=1+0.0334*Math.cos(W)+0.0007*Math.cos(2*W),S=0;
+    for(var i=0;i<T.length;i++)S+=T[i][0]*Math.cos((T[i][1]+T[i][2]*t)*r);
+    return (J+0.00001*S/d-2440587.5)*86400000-69000;
+  }
+  window.lySeason=function(now){
+    var y=new Date(now).getUTCFullYear(),mar=at(y,0),jun=at(y,1),sep=at(y,2),dec=at(y,3);
+    if(now<mar)return{s:'winter',next:dec,ends:mar};
+    if(now<jun)return{s:'spring',next:dec,ends:jun};
+    if(now<sep)return{s:'summer',next:dec,ends:sep};
+    if(now<dec)return{s:'autumn',next:dec,ends:dec};
+    return{s:'winter',next:at(y+1,3),ends:at(y+1,0)};
+  };
+  var info=lySeason(Date.now()),q=(location.search.match(/[?&]season=(winter|spring|summer|autumn)/)||[])[1];
+  if(q){info.s=q;info.forced=true;}
+  window.lyInfo=info;
+  var el=document.documentElement;el.classList.add('s-'+info.s);
+  try{var m=(location.search.match(/[?&]mode=(night|day)/)||[])[1]||localStorage.getItem('ly-mode');if(m==='night')el.classList.add('night')}catch(_){}
+})();
+</script>
+<style>
+[hidden]{display:none!important}
+body{margin:0}
+/* a light winter morning that can turn into a quiet winter night; a small locked door, then a book you turn page by page */
+:root{
+  --paper:#fdf8f2; --blush:#f6e4e6; --lilac:#ece3f0; --wine:#8a2a3a; --ink:#3d2a2f;
+  --soft:#b98b93; --line:#ead7d9; --white:#ffffff; --shadow:rgba(90,40,50,.18);
+  --display:"Aref Ruqaa","Amiri",serif; --body:"Amiri","Times New Roman",serif;
+  color-scheme:light;
+}
+:root.night{
+  --paper:#121528; --blush:#2a2140; --lilac:#1d2340; --wine:#efb8c3; --ink:#ebe3ea;
+  --soft:#a99cbc; --line:#2f3453; --white:#1b1f37; --shadow:rgba(0,0,0,.45);
+  color-scheme:dark;
+}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+/* a still page: nothing to scroll, nothing to zoom, nothing to select or copy */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{position:fixed;inset:0;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+img,canvas,svg{-webkit-user-drag:none;-webkit-touch-callout:none}
+.digits input{-webkit-user-select:text;user-select:text}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);overflow-x:hidden;transition:background-color 1.8s ease,color 1.8s ease}
+.sky,.nightsky{position:fixed;inset:0;pointer-events:none;z-index:0;transition:opacity 2.2s ease}
+.sky{background:radial-gradient(70% 45% at 15% 0%,#ece3f0,transparent 70%),radial-gradient(70% 50% at 100% 100%,#f6e4e6,transparent 70%),#fdf8f2}
+.nightsky{opacity:0;background:
+  radial-gradient(42% 26% at 15% 0%,rgba(236,228,255,.20),transparent 70%),
+  radial-gradient(70% 50% at 100% 100%,rgba(122,70,118,.30),transparent 70%),
+  linear-gradient(#0a0d1f 0%,#121731 55%,#1d1832 100%)}
+.night .sky{opacity:0}
+.night .nightsky{opacity:1}
+.moon{position:fixed;left:15%;top:calc(env(safe-area-inset-top,0px) - 16px);width:46px;height:46px;margin-left:-23px;border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(circle at 38% 36%,#fffaf0 0%,#f3ead8 55%,#e2d6c2 100%);
+  box-shadow:0 0 18px 4px rgba(255,246,226,.35),0 0 60px 18px rgba(214,206,255,.16),0 0 140px 50px rgba(190,180,240,.08);
+  opacity:0;transform:translateY(-14px) scale(.9);transition:opacity 2.4s ease .3s,transform 2.4s ease .3s}
+.moon::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 62% 60%,rgba(190,176,156,.35) 0 9%,transparent 10%),radial-gradient(circle at 34% 64%,rgba(190,176,156,.25) 0 6%,transparent 7%),radial-gradient(circle at 56% 30%,rgba(190,176,156,.22) 0 5%,transparent 6%)}
+.night .moon{opacity:1;transform:none}
+#snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.wrap{position:relative;z-index:2;direction:rtl;height:100vh;height:100dvh;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+
+/* door */
+#gate{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:min(12px,1.6vh);transition:opacity .8s ease,transform .8s ease}
+#gate.leaving{opacity:0;transform:translateY(-10px)}
+.lily{width:min(150px,40vw,15vh);color:var(--wine);animation:sway 6s ease-in-out infinite;transform-origin:50% 100%;transition:color 1.8s ease}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,12vw,68px);line-height:1.2;margin:0;color:var(--wine);transition:color 1.8s ease}
+.hint{font-size:20px;color:var(--soft);margin:0;line-height:1.8}
+.lock{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:10px;width:min(320px,100%)}
+.pick{display:flex;gap:10px;width:100%}
+.pick label{flex:1;display:flex;flex-direction:column;gap:5px;font-size:15px;color:var(--soft);text-align:right}
+select,.digits input{transition:background-color 1.8s ease,color 1.8s ease,border-color 1.8s ease}
+select{appearance:none;-webkit-appearance:none;width:100%;font:inherit;font-size:20px;color:var(--ink);background:var(--white);
+  border:1px solid var(--line);border-radius:14px;padding:9px 12px;text-align:center;text-align-last:center;box-shadow:0 4px 14px rgba(138,42,58,.06)}
+.digits{display:flex;flex-direction:column;gap:5px;width:100%;font-size:15px;color:var(--soft);text-align:right}
+.digits input{width:100%;box-sizing:border-box;font:inherit;font-size:22px;letter-spacing:.5em;text-indent:.5em;color:var(--ink);background:var(--white);direction:ltr;
+  border:1px solid var(--line);border-radius:14px;padding:8px 12px;text-align:center;box-shadow:0 4px 14px rgba(138,42,58,.06)}
+.digits input:focus-visible{outline:2px solid var(--wine);outline-offset:3px}
+select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-offset:3px}
+.open{width:100%;font-family:var(--display);font-weight:700;font-size:22px;color:var(--white);cursor:pointer;
+  background:var(--wine);border:0;border-radius:999px;padding:9px 18px;box-shadow:0 8px 20px rgba(138,42,58,.22);transition:background-color 1.8s ease,color 1.8s ease}
+.open:active{transform:translateY(1px)}
+.open:disabled{opacity:.7}
+.msg{min-height:1.8em;font-size:17px;color:var(--wine);margin:0}
+/* countdown to winter: small, soft, the digits roll over like falling snow */
+.winter{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:2px;color:var(--soft)}
+.winter .cap{font-size:15px;line-height:1.4}
+.winter .row{display:flex;gap:8px;direction:rtl}
+.winter .u{display:flex;flex-direction:column;align-items:center;min-width:46px;padding:4px 6px 2px;border:1px solid var(--line);border-radius:12px;
+  background:color-mix(in srgb,var(--white) 70%,transparent);transition:background-color 1.8s ease,border-color 1.8s ease}
+.winter .n{height:26px;width:100%;display:flex;justify-content:center;direction:ltr}
+.winter .dg{position:relative;width:.62em;font-size:21px;height:100%;overflow:hidden}
+.winter .dg span{position:absolute;inset:0;display:grid;place-items:center;font-size:inherit;line-height:1;color:var(--wine);font-variant-numeric:tabular-nums;transition:transform .55s cubic-bezier(.3,.7,.3,1),opacity .55s ease}
+.winter .dg span.in{transform:translateY(-70%);opacity:0}
+.winter .dg span.out{transform:translateY(70%);opacity:0}
+.winter .l{font-size:11.5px;line-height:1.3}
+.winter.done .row{display:none}
+.winter .q{display:none;font-size:14.5px;line-height:1.7;color:var(--soft);opacity:.9;margin-top:1px}
+.winter.done .cap{font-size:18px;color:var(--wine);transition:color 1.8s ease}
+.winter.done .q{display:block}
+/* shorter screens: the door tightens a little so the countdown always fits */
+@media (max-height:740px){
+  #gate{gap:8px}
+  .lily{width:min(120px,13vh)}
+  h1{font-size:clamp(40px,8.4vh,60px)}
+  .hint{font-size:18px;line-height:1.5}
+  .lock{gap:9px;margin-top:4px}
+  .pick label,.digits{gap:3px}
+  select{padding:7px 12px}
+  .digits input{padding:6px 12px}
+  .open{padding:6px 18px}
+  .msg{min-height:1.5em;font-size:16px}
+}
+@media (max-height:600px){
+  .lily{width:9vh}
+  h1{font-size:clamp(34px,7.4vh,48px)}
+  .hint{font-size:16px}
+  .pick label,.digits{font-size:13px}
+  select,.digits input{font-size:18px;padding:5px 12px}
+  .winter .cap{font-size:13px}
+  .winter .u{min-width:40px;padding:2px 5px 1px}
+  .winter .n{height:22px}
+  .winter .dg{font-size:18px}
+}
+
+/* a quiet note between the door and the book */
+#note{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;cursor:pointer;transition:opacity 1s ease}
+#note.out{opacity:0}
+#note p{margin:0;font-size:clamp(21px,5.6vw,27px);line-height:2;color:var(--wine);max-width:440px;text-wrap:balance;opacity:0;transform:translateY(8px);transition:opacity 1.4s ease,transform 1.4s ease}
+#note p.on{opacity:1;transform:none}
+#note .orn{width:70px;height:10px;color:var(--soft);margin-top:14px;opacity:0;transition:opacity 1.4s ease}
+#note .orn.on{opacity:.8}
+
+/* reader */
+#reader{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px;opacity:0;transition:opacity .9s ease}
+#reader.show{opacity:1}
+.bar{width:100%;max-width:520px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bar .t{font-family:var(--display);font-size:clamp(19px,5.6vw,24px);color:var(--wine);white-space:nowrap;transition:color 1.8s ease}
+.tools{display:flex;align-items:center;gap:6px}
+.tools button{box-sizing:border-box;border:1px solid var(--line);background:var(--white);border-radius:999px;cursor:pointer;
+  transition:background-color 1.8s ease,border-color 1.8s ease,color 1.8s ease,opacity .3s,box-shadow .3s}
+.snd{height:30px;min-width:30px;padding:0 7px;font-size:13px;line-height:1;opacity:.5;display:inline-flex;align-items:center;justify-content:center}
+.snd.on{opacity:1;box-shadow:0 0 0 3px var(--blush)}
+.snd.wait{animation:breath 1s ease-in-out infinite}
+@keyframes breath{50%{opacity:.25}}
+.dl,.mode{height:36px;display:inline-flex;align-items:center;justify-content:center}
+.dl.ready{animation:ready 1.6s ease-in-out infinite;font-size:12.5px;padding:0 9px}
+.bar:has(.dl.ready) .t{font-size:clamp(17px,5vw,24px)}
+@keyframes ready{50%{box-shadow:0 0 0 4px var(--blush)}}
+.dl{font-family:var(--body);font-weight:700;font-size:16px;color:var(--wine);padding:0 13px;white-space:nowrap}
+.mode{width:50px;padding:0;color:var(--wine);position:relative}
+.mode svg{position:absolute;width:22px;height:22px;transition:opacity .9s ease,transform .9s ease}
+.mode .to-night{opacity:1;transform:none}
+.mode .to-day{opacity:0;transform:rotate(-90deg) scale(.6)}
+.night .mode .to-night{opacity:0;transform:rotate(90deg) scale(.6)}
+.night .mode .to-day{opacity:1;transform:none}
+.stage{position:relative;overflow:hidden;padding:18px 0 26px;margin:-18px 0 -26px}
+.book{position:relative;perspective:2200px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;transition:filter 1.8s ease}
+.night .book{filter:brightness(.8) sepia(.22) saturate(.95)}
+.leaf{position:absolute;inset:0;background:var(--paper);border-radius:4px 2px 2px 4px;overflow:hidden;box-shadow:0 14px 34px var(--shadow),0 2px 6px rgba(90,40,50,.08)}
+.leaf canvas{display:block;width:100%;height:100%}
+.leaf .dim{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to left,rgba(60,20,30,.28),rgba(60,20,30,0) 70%);opacity:0}
+.turn{position:absolute;left:0;top:-8%;width:100%;height:116%;pointer-events:none}
+.nav{display:flex;align-items:center;gap:18px}
+.nav button{direction:ltr;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--white);color:var(--wine);font-size:20px;cursor:pointer;display:grid;place-items:center;transition:background-color 1.8s ease,border-color 1.8s ease,color 1.8s ease}
+.nav button:disabled{opacity:.35;cursor:default}
+.count{font-size:17px;color:var(--soft);min-width:84px;text-align:center;font-variant-numeric:tabular-nums}
+.status{font-size:16px;color:var(--soft);margin:0}
+
+@media (prefers-reduced-motion:reduce){.lily{animation:none}#gate,#reader,#note,#note p,.sky,.nightsky,.moon,body,.book{transition:none}}
+/* ---------- seasons: autumn is the original look; winter, spring and summer each bring their own air ---------- */
+:root.s-winter{--paper:#f6f9fd;--blush:#e8e9f6;--lilac:#dce9f7;--wine:#7a2a44;--ink:#2d3446;--soft:#8a9bb6;--line:#d8e2f0;--white:#ffffff;--shadow:rgba(40,60,100,.16)}
+:root.s-winter.night{--paper:#0a1428;--blush:#1b2442;--lilac:#132243;--wine:#f1c6d2;--ink:#e6edf8;--soft:#9db0cf;--line:#283a5e;--white:#13203b;--shadow:rgba(0,0,0,.5)}
+:root.s-spring{--paper:#fbfaf2;--blush:#f5e5ec;--lilac:#ece5f6;--wine:#7b2d52;--ink:#33302b;--soft:#9c8fb0;--line:#e6dfec;--white:#ffffff;--shadow:rgba(70,60,40,.15)}
+:root.s-spring.night{--paper:#0d1918;--blush:#1d2b27;--lilac:#172331;--wine:#ecc3d8;--ink:#e6ede5;--soft:#a4b6a7;--line:#2a3c38;--white:#15221f;--shadow:rgba(0,0,0,.5)}
+:root.s-summer{--paper:#fff8ee;--blush:#fbe4cf;--lilac:#ffe8c6;--wine:#8c3424;--ink:#3b2a21;--soft:#c18c66;--line:#f2dcc2;--white:#ffffff;--shadow:rgba(120,70,30,.16)}
+:root.s-summer.night{--paper:#110e22;--blush:#2c1c2e;--lilac:#201935;--wine:#f7cba9;--ink:#f1e7dc;--soft:#c6a690;--line:#3a2d46;--white:#1c172f;--shadow:rgba(0,0,0,.5)}
+
+.s-winter .sky{background:radial-gradient(70% 45% at 15% 0%,#dfeafa,transparent 70%),radial-gradient(70% 50% at 100% 100%,#ebe6f7,transparent 70%),linear-gradient(#f8fbfe,#eef3fa)}
+.s-winter .nightsky{background:radial-gradient(42% 26% at 15% 0%,rgba(200,220,255,.22),transparent 70%),radial-gradient(80% 45% at 80% 100%,rgba(90,110,190,.28),transparent 70%),linear-gradient(#050d24 0%,#0c1a3c 58%,#17244a 100%)}
+.s-spring .sky{background:radial-gradient(70% 45% at 15% 0%,#fff1d8,transparent 70%),radial-gradient(70% 50% at 100% 100%,#e4f0dc,transparent 70%),radial-gradient(60% 40% at 0% 100%,#f3e6f2,transparent 70%),#fbfaf2}
+.s-spring .nightsky{background:radial-gradient(42% 26% at 15% 0%,rgba(230,240,220,.16),transparent 70%),radial-gradient(80% 50% at 100% 100%,rgba(70,120,90,.26),transparent 70%),linear-gradient(#07131a 0%,#0e1f25 58%,#16262a 100%)}
+.s-summer .sky{background:radial-gradient(60% 40% at 15% 0%,#ffdca0,transparent 72%),radial-gradient(70% 50% at 100% 100%,#fbd6c0,transparent 70%),linear-gradient(#fff6e6,#fff3e8)}
+.s-summer .nightsky{background:radial-gradient(42% 26% at 15% 0%,rgba(255,230,190,.18),transparent 70%),radial-gradient(90% 40% at 50% 100%,rgba(255,140,90,.20),transparent 70%),linear-gradient(#0a081e 0%,#191332 55%,#2e1c34 100%)}
+
+/* winter: a breath of frost on the edges of the glass */
+.frost{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity 2.2s ease;
+  box-shadow:inset 0 0 70px 22px rgba(255,255,255,.95),inset 0 0 160px 40px rgba(214,228,248,.55)}
+.s-winter .frost{opacity:1}
+.s-winter.night .frost{box-shadow:inset 0 0 70px 18px rgba(170,195,240,.14),inset 0 0 160px 40px rgba(120,150,220,.10)}
+.s-winter select,.s-winter .digits input,.s-winter .winter .u{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);background:color-mix(in srgb,var(--white) 78%,transparent)}
+
+/* summer: slow sun rays turning in the bright corner */
+.rays{position:fixed;left:15%;top:0;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;pointer-events:none;z-index:0;opacity:0;transition:opacity 2.2s ease;
+  background:repeating-conic-gradient(from 0deg,rgba(255,214,150,.20) 0deg 5deg,transparent 5deg 17deg);
+  -webkit-mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 25%,transparent 55%);mask:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 25%,transparent 55%);
+  animation:turn 120s linear infinite}
+@keyframes turn{to{transform:rotate(360deg)}}
+.s-summer .rays{opacity:1}
+.s-summer.night .rays{opacity:0}
+
+.s-winter .moon{background:radial-gradient(circle at 38% 36%,#ffffff 0%,#e9eef8 55%,#cfd8ea 100%);box-shadow:0 0 18px 4px rgba(230,240,255,.4),0 0 60px 18px rgba(170,195,255,.18),0 0 140px 50px rgba(150,180,255,.09)}
+.s-summer .moon{background:radial-gradient(circle at 38% 36%,#fff6e0 0%,#f6e2bb 55%,#e6c999 100%);box-shadow:0 0 18px 4px rgba(255,226,180,.38),0 0 60px 18px rgba(255,190,140,.16),0 0 140px 50px rgba(255,170,120,.08)}
+@media (prefers-reduced-motion:reduce){.rays{animation:none}.frost,.rays{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="sky" aria-hidden="true"></div>
+<div class="nightsky" aria-hidden="true"></div>
+<div class="rays" aria-hidden="true"></div>
+<div class="moon" aria-hidden="true"></div>
+<div class="frost" aria-hidden="true"></div>
+<canvas id="snow" aria-hidden="true"></canvas>
+
+<main class="wrap">
+  <section id="gate">
+    <svg class="lily" viewBox="0 0 120 140" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M60 136V70"/>
+        <path d="M60 104c-10-2-18 4-22 12 9 1 17-3 22-12z" fill="#e9f0e4"/>
+        <path d="M60 92c9-3 17 1 22 8-9 2-17-1-22-8z" fill="#e9f0e4"/>
+        <path d="M60 70C50 56 46 36 52 14c8 16 11 36 8 56z" fill="#f7dfe3"/>
+        <path d="M60 70c10-14 14-34 8-56-8 16-11 36-8 56z" fill="#f7dfe3"/>
+        <path d="M60 72C44 66 26 66 12 76c16 6 34 4 48-4z" fill="#f7dfe3"/>
+        <path d="M60 72c16-6 34-6 48 4-16 6-34 4-48-4z" fill="#f7dfe3"/>
+        <path d="M59 71C48 76 40 88 38 102c12-8 19-19 21-31z" fill="#f2d2d8"/>
+        <path d="M61 71c11 5 19 17 21 31-12-8-19-19-21-31z" fill="#f2d2d8"/>
+        <path d="M60 70l-6-22M60 70l6-22M60 70l-12-14M60 70l12-14" stroke-width="1"/>
+        <g fill="currentColor" stroke="none"><circle cx="54" cy="47" r="2"/><circle cx="66" cy="47" r="2"/><circle cx="48" cy="55" r="2"/><circle cx="72" cy="55" r="2"/></g>
+        <path d="M54 32l3 10M66 32l-3 10M36 72l10 1M84 72l-10 1" stroke-width=".8" opacity=".6"/>
+      </g>
+    </svg>
+    <h1>ليل… يوم</h1>
+    <p class="hint">هالباب ما ينفتح إلا بيومك</p>
+    <form class="lock" id="lock" autocomplete="off" novalidate>
+      <div class="pick">
+        <label for="day">اليوم<select id="day" required><option value="">—</option></select></label>
+        <label for="month">الشهر<select id="month" required><option value="">—</option></select></label>
+      </div>
+      <label class="digits" for="tail">وآخر أربع أرقام من جوالك<input id="tail" inputmode="numeric" maxlength="8" autocomplete="off" autocorrect="off" spellcheck="false"></label>
+      <button class="open" type="submit">فتح</button>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </form>
+    <div class="winter" id="winter" aria-label="العد التنازلي للشتاء">
+      <div class="cap">❄︎ باقي على الشتاء</div>
+      <div class="q">"ليلة شتا، وبرد نجد اللي يقرص الوجه…"</div>
+      <div class="row">
+        <div class="u"><div class="n" data-k="d"></div><div class="l">يوم</div></div>
+        <div class="u"><div class="n" data-k="h"></div><div class="l">ساعة</div></div>
+        <div class="u"><div class="n" data-k="m"></div><div class="l">دقيقة</div></div>
+        <div class="u"><div class="n" data-k="s"></div><div class="l">ثانية</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="note" hidden>
+    <p>لو كانت الدنيا أهدى شوي، كان جاك هاليوم بأكثر من كذا…</p>
+    <p>بس اخترت الهدية الأخيره اللي ما يشوفها أحد غيرك</p>
+    <svg class="orn" viewBox="0 0 70 10" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1"><path d="M0 5h28M42 5h28"/><path d="M35 1l4 4-4 4-4-4z"/></g></svg>
+  </section>
+
+  <section id="reader" hidden>
+    <div class="bar">
+      <span class="t">ليل… يوم</span>
+      <div class="tools">
+        <button class="snd" id="sndNature" type="button" aria-pressed="false" aria-label="صوت الطبيعة">🍃❄️</button>
+        <button class="snd" id="sndFire" type="button" aria-pressed="false" aria-label="صوت النار">🪵</button>
+        <button class="mode" id="mode" type="button" aria-label="الوضع الليلي">
+          <svg class="to-night" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3.6a8 8 0 1 0 4.9 12.3 6.6 6.6 0 0 1-4.9-12.3z"/><path d="M19 3.2v2.6M17.7 4.5h2.6" stroke-width="1.2"/><circle cx="21" cy="9.4" r=".5" fill="currentColor" stroke="none"/></g></svg>
+          <svg class="to-day" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.1M12 19.1v2.1M2.8 12h2.1M19.1 12h2.1M5.5 5.5l1.5 1.5M17 17l1.5 1.5M5.5 18.5L7 17M17 7l1.5-1.5"/></g></svg>
+        </button>
+        <button class="dl" id="dl" type="button">تحميل الكتاب</button>
+      </div>
+    </div>
+    <p class="status" id="status">لحظة… الصفحات تتفتح</p>
+    <div class="stage" id="stage" hidden>
+      <div class="book" id="book">
+        <div class="leaf" id="base"><div class="dim" id="dim"></div></div>
+        <canvas class="turn" id="turn"></canvas>
+      </div>
+    </div>
+    <div class="nav" id="nav" hidden>
+      <button type="button" id="prev" aria-label="الصفحة السابقة">›</button>
+      <span class="count" id="count"></span>
+      <button type="button" id="next" aria-label="الصفحة التالية">‹</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const V = '8';
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const root = document.documentElement;
+
+  /* ---------- the files: a tiny lock file first, then the pages stream in behind it ---------- */
+  const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  let metaP = null, meta = null;
+  function getMeta(){
+    if (!metaP) metaP = fetch('meta.json?v=' + V).then(r => { if (!r.ok) throw new Error('net'); return r.json(); })
+      .then(m => { meta = m; startPages(); return m; })
+      .catch(e => { metaP = null; throw e; });
+    return metaP;
+  }
+  let pagesBuf = null, got = 0, pagesFailed = false, pagesTries = 0;
+  const waiters = [];
+  function wake(){ for (let i = waiters.length - 1; i >= 0; i--){ const w = waiters[i];
+    if (got >= w.end){ waiters.splice(i, 1); w.ok(); } else if (pagesFailed){ waiters.splice(i, 1); w.no(new Error('net')); } } }
+  function startPages(){
+    if (pagesBuf) return;
+    const last = meta.p[meta.p.length - 1]; pagesBuf = new Uint8Array(last[1] + last[2]);
+    pull();
+  }
+  async function pull(){
+    pagesFailed = false;
+    try {
+      const r = await fetch('pages.bin?v=' + V, got ? {headers: {Range: 'bytes=' + got + '-'}} : {});
+      if (!r.ok) throw new Error('net');
+      if (r.status === 200) got = 0;                 // the server sent everything again
+      if (r.body && r.body.getReader){
+        const rd = r.body.getReader();
+        for (;;){ const {done, value} = await rd.read(); if (done) break;
+          pagesBuf.set(value.subarray(0, Math.max(0, pagesBuf.length - got)), got); got = Math.min(pagesBuf.length, got + value.length); wake(); }
+      } else { const all = new Uint8Array(await r.arrayBuffer()); pagesBuf.set(all.subarray(0, pagesBuf.length)); got = Math.min(all.length, pagesBuf.length); wake(); }
+      if (got < pagesBuf.length) throw new Error('short');
+    } catch (_){
+      if (++pagesTries < 6){ setTimeout(pull, 1500 * pagesTries); return; }
+      pagesFailed = true; wake();
+    }
+  }
+  const upTo = end => got >= end ? Promise.resolve() : new Promise((ok, no) => {
+    if (pagesFailed){ pagesTries = 0; pull(); }
+    waiters.push({end, ok, no});
+  });
+  getMeta().catch(() => {});
+
+  /* ---------- the air of each season: snow and petals, crystals, lavender and butterflies, golden dust; stars at night ---------- */
+  const cv = document.getElementById('snow'), cx = cv.getContext('2d');
+  let W, H, flakes = [], petals = [], stars = [], crystals = [], buds = [], flies = [], motes = [], shoot = null, nextShoot = 0;
+  let nightAmt = root.classList.contains('night') ? 1 : 0;
+  const seasonNow = () => (root.className.match(/\bs-(\w+)/) || [])[1] || 'autumn';
+  function size(){ const r = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+    cv.width = W * r; cv.height = H * r; cx.setTransform(r, 0, 0, r, 0, 0); }
+  size(); addEventListener('resize', () => { size(); fit(); if (still) draw(0); });
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const many = (n, f) => Array.from({length: n}, f);
+  function populate(){
+    const s = seasonNow();
+    flakes = many(s === 'winter' ? 95 : s === 'autumn' ? 60 : 0, () => ({x: rnd(0, 1), y: rnd(0, 1), r: rnd(1, 3.2), s: rnd(.2, .6), w: rnd(0, 6.3)}));
+    crystals = many(s === 'winter' ? 11 : 0, () => ({x: rnd(0, 1), y: rnd(0, 1), z: rnd(5, 10), s: rnd(.12, .3), a: rnd(0, 6.3), v: rnd(-.006, .006), w: rnd(0, 6.3)}));
+    petals = many({winter: 3, autumn: 6, spring: 11, summer: 3}[s], () => ({x: rnd(0, 1), y: rnd(-1, 1), s: rnd(.25, .45), a: rnd(0, 6.3), k: rnd(.6, 1)}));
+    buds = many(s === 'spring' ? 16 : 0, () => ({x: rnd(0, 1), y: rnd(-1, 1), s: rnd(.18, .34), a: rnd(0, 6.3), k: rnd(.7, 1.1)}));
+    flies = many(s === 'spring' ? 12 : 0, (_, i) => ({x: rnd(.05, .95), y: rnd(.1, .9), d: rnd(0, 6.3), sp: rnd(.12, .25), ph: rnd(0, 6.3), bf: i < 4}));
+    motes = many(s === 'summer' ? 38 : 0, () => ({x: rnd(0, 1), y: rnd(0, 1), r: rnd(.6, 1.8), s: rnd(.05, .16), ph: rnd(0, 6.3), sp: rnd(.6, 1.6)}));
+    stars = [];
+    for (let i = 0; i < (s === 'summer' ? 58 : 34); i++){
+      let x, y; do { x = rnd(.03, .97); y = Math.pow(Math.random(), 1.4) * .78; } while (Math.hypot(x - .15, y * 1.6) < .16);
+      stars.push({x, y, r: rnd(.5, 1.35), sp: rnd(.35, 1.1), ph: rnd(0, 6.3), base: rnd(.25, .55)});
+    }
+    shoot = null; nextShoot = performance.now() + rnd(6000, 12000);
+  }
+  populate();
+  function crystal(x, y, z, a, alpha){
+    cx.save(); cx.translate(x, y); cx.rotate(a);
+    cx.strokeStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')'; cx.lineWidth = 1.1; cx.lineCap = 'round';
+    cx.shadowColor = 'rgba(150,180,230,' + (alpha * .9).toFixed(3) + ')'; cx.shadowBlur = 3;
+    cx.beginPath();
+    for (let k = 0; k < 6; k++){
+      cx.moveTo(0, 0); cx.lineTo(0, -z);
+      cx.moveTo(0, -z * .55); cx.lineTo(-z * .26, -z * .78); cx.moveTo(0, -z * .55); cx.lineTo(z * .26, -z * .78);
+      cx.moveTo(0, -z * .3); cx.lineTo(-z * .17, -z * .45); cx.moveTo(0, -z * .3); cx.lineTo(z * .17, -z * .45);
+      cx.rotate(Math.PI / 3);
+    }
+    cx.stroke(); cx.restore();
+  }
+  function petal(p, color){
+    cx.save(); cx.translate(p.x * W + Math.sin(p.a * 2) * 26, p.y * H); cx.rotate(p.a); cx.scale(p.k, p.k);
+    cx.fillStyle = color;
+    cx.beginPath(); cx.moveTo(0, -9); cx.bezierCurveTo(8, -5, 6, 7, 0, 10); cx.bezierCurveTo(-6, 7, -8, -5, 0, -9); cx.fill();
+    cx.restore();
+  }
+  function draw(t){
+    const target = root.classList.contains('night') ? 1 : 0;
+    nightAmt = still ? target : nightAmt + (target - nightAmt) * .035;
+    if (Math.abs(target - nightAmt) < .002) nightAmt = target;
+    const s = (t || 0) / 1000, day = 1 - nightAmt, season = seasonNow(), move = !still;
+    cx.clearRect(0, 0, W, H);
+    if (nightAmt > 0){
+      for (const st of stars){
+        const tw = .5 + .5 * Math.sin(s * st.sp + st.ph), a = nightAmt * (st.base + (1 - st.base) * tw * tw);
+        const x = st.x * W, y = st.y * H;
+        cx.fillStyle = 'rgba(255,247,232,' + a.toFixed(3) + ')';
+        cx.beginPath(); cx.arc(x, y, st.r, 0, 6.283); cx.fill();
+        if (st.r > 1.05){
+          const g = st.r * (2.6 + 2.4 * tw);
+          cx.strokeStyle = 'rgba(255,247,232,' + (a * .35).toFixed(3) + ')'; cx.lineWidth = .6;
+          cx.beginPath(); cx.moveTo(x - g, y); cx.lineTo(x + g, y); cx.moveTo(x, y - g); cx.lineTo(x, y + g); cx.stroke();
+        }
+      }
+      // now and then a star falls on summer and winter nights
+      if ((season === 'summer' || season === 'winter') && move){
+        const now = performance.now();
+        if (!shoot && now > nextShoot) shoot = {x: rnd(.35, .95) * W, y: rnd(.04, .3) * H, t0: now, len: rnd(90, 150)};
+        if (shoot){
+          const k = (now - shoot.t0) / 900;
+          if (k >= 1){ shoot = null; nextShoot = now + rnd(9000, 17000); }
+          else {
+            const hx = shoot.x - k * 260, hy = shoot.y + k * 120, a = nightAmt * Math.sin(Math.PI * k);
+            const g = cx.createLinearGradient(hx, hy, hx + shoot.len, hy - shoot.len * .46);
+            g.addColorStop(0, 'rgba(255,250,235,' + a.toFixed(3) + ')'); g.addColorStop(1, 'rgba(255,250,235,0)');
+            cx.strokeStyle = g; cx.lineWidth = 1.3; cx.beginPath(); cx.moveTo(hx, hy); cx.lineTo(hx + shoot.len, hy - shoot.len * .46); cx.stroke();
+          }
+        }
+      }
+    }
+    // summer: warm dust drifting up through the light
+    for (const m of motes){
+      if (move){ m.y -= m.s / H * 1.2; m.x += Math.sin(s * .3 + m.ph) * .00012; if (m.y < -.02){ m.y = 1.02; m.x = Math.random(); } }
+      const tw = .5 + .5 * Math.sin(s * m.sp + m.ph), a = (.25 + .5 * tw) * (day * .9 + nightAmt * .45);
+      const col = nightAmt > .5 ? '255,205,150' : '255,200,120';
+      cx.fillStyle = 'rgba(' + col + ',' + (a * .35).toFixed(3) + ')'; cx.beginPath(); cx.arc(m.x * W, m.y * H, m.r * 3, 0, 6.283); cx.fill();
+      cx.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')'; cx.beginPath(); cx.arc(m.x * W, m.y * H, m.r, 0, 6.283); cx.fill();
+    }
+    // snow (autumn and winter)
+    const ring = 'rgba(' + Math.round(185 + 70 * nightAmt) + ',' + Math.round(139 + 116 * nightAmt) + ',' + Math.round(147 + 108 * nightAmt) + ',' + (.35 - .23 * nightAmt).toFixed(3) + ')';
+    const ringW = 'rgba(' + Math.round(140 + 100 * nightAmt) + ',' + Math.round(165 + 80 * nightAmt) + ',' + Math.round(205 + 50 * nightAmt) + ',' + (.45 - .3 * nightAmt).toFixed(3) + ')';
+    for (const f of flakes){
+      if (move){ f.y += f.s / H * (season === 'winter' ? 1.7 : 1.4); f.w += .012; if (f.y > 1.02){ f.y = -.02; f.x = Math.random(); } }
+      const x = f.x * W + Math.sin(f.w) * 10;
+      cx.beginPath(); cx.fillStyle = 'rgba(255,255,255,' + (.95 - .1 * nightAmt).toFixed(3) + ')'; cx.arc(x, f.y * H, f.r, 0, 6.283); cx.fill();
+      cx.lineWidth = .6; cx.strokeStyle = season === 'winter' ? ringW : ring; cx.stroke();
+    }
+    for (const c of crystals){
+      if (move){ c.y += c.s / H * 1.3; c.a += c.v; c.w += .01; if (c.y > 1.04){ c.y = -.04; c.x = Math.random(); } }
+      crystal(c.x * W + Math.sin(c.w) * 14, c.y * H, c.z, c.a, .9 - .15 * nightAmt);
+    }
+    // spring: lavender buds drifting down
+    for (const b of buds){
+      if (move){ b.y += b.s / H * 1.1; b.a += .008; if (b.y > 1.05){ b.y = -.05; b.x = Math.random(); } }
+      cx.save(); cx.translate(b.x * W + Math.sin(b.a * 1.7) * 22, b.y * H); cx.rotate(Math.sin(b.a) * .8); cx.scale(b.k, b.k);
+      cx.strokeStyle = 'rgba(120,150,110,' + (.55 - .2 * nightAmt).toFixed(3) + ')'; cx.lineWidth = .8;
+      cx.beginPath(); cx.moveTo(0, 7); cx.lineTo(0, -6); cx.stroke();
+      cx.fillStyle = 'rgba(158,124,204,' + (.8 - .25 * nightAmt).toFixed(3) + ')';
+      for (let j = 0; j < 4; j++){ cx.beginPath(); cx.ellipse((j % 2 ? 1.3 : -1.3), -5 + j * 2.4, 1.6, 2.2, 0, 0, 6.283); cx.fill(); }
+      cx.restore();
+    }
+    // petals of the lily
+    const pc = {spring: 'rgba(246,196,212,', summer: 'rgba(240,172,128,', winter: 'rgba(232,160,175,', autumn: 'rgba(232,160,175,'}[season];
+    for (const p of petals){
+      if (move){ p.y += p.s / H * 1.1; p.a += .006; if (p.y > 1.05){ p.y = -.05; p.x = Math.random(); } }
+      petal(p, pc + (.7 - .12 * nightAmt).toFixed(3) + ')');
+    }
+    // spring: butterflies by day, fireflies by night
+    for (const f of flies){
+      if (move){ f.d += Math.sin(s * .7 + f.ph) * .02; f.x += Math.cos(f.d) * f.sp / W * 2.2; f.y += Math.sin(f.d) * f.sp / H * 1.6;
+        if (f.x < -.05) f.x = 1.05; if (f.x > 1.05) f.x = -.05; if (f.y < .05) f.d = Math.abs(f.d); if (f.y > .95) f.d = -Math.abs(f.d); }
+      const x = f.x * W, y = f.y * H;
+      if (f.bf && day > .02){
+        const flap = Math.abs(Math.sin(s * 7 + f.ph)) * .8 + .2;
+        cx.save(); cx.translate(x, y); cx.rotate(Math.cos(f.d) > 0 ? .3 : -.3); cx.globalAlpha = day * .85;
+        cx.fillStyle = f.ph > 3 ? 'rgba(214,122,156,.9)' : 'rgba(176,146,214,.9)';
+        for (const side of [-1, 1]){
+          cx.beginPath(); cx.ellipse(side * 4.2 * flap, -2, 4.4 * flap, 3.4, side * .5, 0, 6.283); cx.fill();
+          cx.beginPath(); cx.ellipse(side * 3.2 * flap, 2.6, 3 * flap, 2.3, -side * .4, 0, 6.283); cx.fill();
+        }
+        cx.fillStyle = 'rgba(80,50,60,.8)'; cx.fillRect(-.5, -4, 1, 8);
+        cx.restore();
+      }
+      if (nightAmt > .02){
+        const glow = (.5 + .5 * Math.sin(s * 1.6 + f.ph * 3)) * nightAmt;
+        const g = cx.createRadialGradient(x, y, 0, x, y, 9);
+        g.addColorStop(0, 'rgba(226,255,160,' + (glow * .9).toFixed(3) + ')'); g.addColorStop(1, 'rgba(226,255,160,0)');
+        cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, 9, 0, 6.283); cx.fill();
+      }
+    }
+    if (!still) requestAnimationFrame(draw);
+  }
+  still ? draw(0) : requestAnimationFrame(draw);
+
+  /* ---------- keep the page still: no pinch zoom, no double-tap zoom, no dragging the page, no copying ---------- */
+  const isField = el => el && el.closest && el.closest('input,select,textarea');
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), {passive: false}));
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1 || !isField(e.target)) e.preventDefault(); }, {passive: false});
+  document.addEventListener('dblclick', e => e.preventDefault(), {passive: false});
+  addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, {passive: false});
+  ['copy', 'cut', 'contextmenu', 'selectstart', 'dragstart'].forEach(ev => document.addEventListener(ev, e => { if (!isField(e.target)) e.preventDefault(); }));
+  addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && /^[acsp+=\-0]$/i.test(e.key) && !isField(e.target)) e.preventDefault(); });
+
+  /* ---------- countdown to winter: always the next December solstice; all through winter, a greeting instead ---------- */
+  (() => {
+    const info = window.lyInfo || {s: 'autumn', next: Date.UTC(2026, 11, 21, 20, 50)}, WINTER = info.next, box = document.getElementById('winter');
+    const AR = '٠١٢٣٤٥٦٧٨٩', slots = {};
+    box.querySelectorAll('.n').forEach(n => {
+      slots[n.dataset.k] = (n.dataset.k === 'd' ? [0, 1, 2] : [0, 1]).map(() => { const d = document.createElement('div'); d.className = 'dg'; n.appendChild(d); return {el: d, v: null}; });
+    });
+    function roll(slot, ch){                        // only the digit that really changed falls into place
+      if (slot.v === ch) return;
+      const first = slot.v === null; slot.v = ch;
+      const old = slot.el.querySelector('span:not(.out)');
+      const s = document.createElement('span'); s.textContent = ch;
+      if (!first && !still){ s.className = 'in'; slot.el.appendChild(s); requestAnimationFrame(() => requestAnimationFrame(() => s.className = '')); }
+      else slot.el.appendChild(s);
+      if (old){ if (first || still) old.remove(); else { old.className = 'out'; setTimeout(() => old.remove(), 600); } }
+    }
+    function put(k, v){
+      const sl = slots[k], txt = String(Math.min(v, sl.length === 3 ? 999 : 99)).padStart(sl.length, '0');
+      sl.forEach((slot, i) => {
+        const lead = sl.length === 3 && i === 0 && v < 100;           // a third digit only when the days need it
+        slot.el.style.display = lead ? 'none' : '';
+        roll(slot, AR[txt[i]]);
+      });
+    }
+    function tick(){
+      let left = info.s === 'winter' ? 0 : Math.max(0, Math.floor((WINTER - Date.now()) / 1000));
+      if (!left){
+        box.classList.add('done'); box.querySelector('.cap').textContent = 'وصل الشتاء… عساه يلقاك بخير ودفا ❄︎';
+        if (info.s !== 'winter' && !info.forced){                    // winter arrives while she is here: the page changes with it
+          info.s = 'winter'; root.classList.remove('s-autumn', 's-spring', 's-summer'); root.classList.add('s-winter'); populate(); paintMode();
+        }
+        return;
+      }
+      put('d', Math.floor(left / 86400)); left %= 86400;
+      put('h', Math.floor(left / 3600)); left %= 3600;
+      put('m', Math.floor(left / 60)); put('s', left % 60);
+      setTimeout(tick, 1000 - Date.now() % 1000 + 5);
+    }
+    tick();
+  })();
+
+  /* ---------- lock ---------- */
+  const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const day = document.getElementById('day'), month = document.getElementById('month');
+  for (let d = 1; d <= 31; d++) day.add(new Option(String(d), String(d)));
+  months.forEach((m, i) => month.add(new Option(m, String(i + 1))));
+  const msg = document.getElementById('msg'), form = document.getElementById('lock'), tail = document.getElementById('tail');
+  const openBtn = form.querySelector('.open');
+  const digits = s => String(s || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9]/g, '').slice(0, 4);
+  tail.addEventListener('blur', () => setTimeout(() => scrollTo(0, 0), 60));
+  tail.addEventListener('input', () => { const v = digits(tail.value); if (v !== tail.value) tail.value = v; });
+
+  let key = null;
+  const decrypt = (iv, bytes) => crypto.subtle.decrypt({name: 'AES-GCM', iv: b64(iv)}, key, bytes).then(b => new Uint8Array(b));
+  async function dateRight(date){
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(date), 'PBKDF2', false, ['deriveBits']);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits({name: 'PBKDF2', salt: b64(meta.vs), iterations: 250000, hash: 'SHA-256'}, base, 128));
+    const want = b64(meta.v); return bits.every((x, i) => x === want[i]);
+  }
+  async function makeKey(pass){
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({name: 'PBKDF2', salt: b64(meta.s), iterations: 250000, hash: 'SHA-256'},
+      base, {name: 'AES-GCM', length: 256}, false, ['decrypt']);
+  }
+
+  // only a real cryptographic "no" is ever called a wrong answer; a slow line is just waited for or retried
+  let checking = false;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (checking) return;
+    if (!day.value || !month.value){ msg.textContent = 'اختاري اليوم والشهر'; return; }
+    const code = digits(tail.value);
+    if (code.length !== 4){ msg.textContent = 'اكتبي آخر أربع أرقام'; return; }
+    tail.blur(); scrollTo(0, 0);
+    if (!window.crypto || !crypto.subtle){ msg.textContent = 'افتحي الرابط من Safari'; return; }
+    checking = true; openBtn.disabled = true; msg.textContent = '…';
+    try {
+      let tries = 0;
+      for (;;){ try { await getMeta(); break; } catch (_){ if (++tries >= 4) throw new Error('net'); await new Promise(r => setTimeout(r, 1200)); } }
+      const date = month.value + '-' + day.value;
+      if (!(await dateRight(date))){ msg.textContent = 'ركزي شوي بيوم ميلادك'; return; }
+      key = await makeKey(date + '-' + code);
+      try { await decrypt(meta.k.i, b64(meta.k.c)); }
+      catch (_){ key = null; msg.textContent = 'ركزي شوي بالرقم'; return; }   // the check is local and tiny: a failure here can only mean the number
+    } catch (_){
+      msg.textContent = 'النت ثقيل شوي… جرّبي مرة ثانية'; return;
+    } finally { checking = false; openBtn.disabled = false; }
+    msg.textContent = '';
+    const gate = document.getElementById('gate'); gate.classList.add('leaving');
+    setTimeout(() => { gate.hidden = true; showNote(); }, still ? 0 : 800);
+  });
+  async function pageBytes(n){
+    const [iv, off, len] = meta.p[n - 1];
+    await upTo(off + len);
+    return decrypt(iv, pagesBuf.subarray(off, off + len));
+  }
+
+  /* ---------- book: a real page you hold and turn ---------- */
+  const bookEl = document.getElementById('book'), base = document.getElementById('base'), turnEl = document.getElementById('turn');
+  const dimEl = document.getElementById('dim'), countEl = document.getElementById('count');
+  const nextBtn = document.getElementById('next'), prevBtn = document.getElementById('prev');
+  let doc = null, cur = 1, BW = 0, BH = 0, busy = false, drag = null;
+  const cache = new Map();
+  const ar = n => n.toLocaleString('ar-SA');
+
+  function fit(){
+    if (document.getElementById('stage').hidden) return;
+    const wrap = document.querySelector('.wrap'), bar = document.querySelector('.bar'), nav = document.getElementById('nav');
+    const maxH = wrap.clientHeight - 40 - bar.offsetHeight - nav.offsetHeight - 24 - 14, maxW = Math.min(wrap.clientWidth - 32, 520);
+    let w = maxW, h = w * 210 / 148; if (h > maxH){ h = Math.max(maxH, 240); w = h * 148 / 210; }
+    BW = w; BH = h; bookEl.style.width = w + 'px'; bookEl.style.height = h + 'px';
+  }
+  function pageCanvas(n){
+    if (cache.has(n)) return cache.get(n);
+    const job = (async () => {
+      const bytes = await pageBytes(n);
+      const img = await createImageBitmap(new Blob([bytes], {type: 'image/webp'}));
+      const r = Math.min(devicePixelRatio || 1, 2.5), w = Math.min(img.width, Math.round(BW * r)), h = Math.round(w * img.height / img.width);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, w, h);
+      if (img.close) img.close();
+      return c;
+    })();
+    cache.set(n, job); job.catch(() => { if (cache.get(n) === job) cache.delete(n); });
+    if (cache.size > 12) for (const k of cache.keys()) if (Math.abs(k - cur) > 5){ cache.delete(k); break; }
+    return job;
+  }
+  async function paintBase(n){
+    base.querySelectorAll('canvas,.wait').forEach(e => e.remove());
+    if (n < 1 || n > doc.numPages){ return; }
+    const src = await pageCanvas(n);
+    const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+    c.getContext('2d').drawImage(src, 0, 0); base.insertBefore(c, dimEl);
+  }
+  // the turning page is drawn on one canvas: thin columns bent around the spine (right edge), no seams
+  const tctx = turnEl.getContext('2d'); let leafSrc = null;
+  async function buildLeaf(n){ leafSrc = await pageCanvas(n);
+    const r = Math.min(devicePixelRatio || 1, 2.5); turnEl.width = Math.round(BW * r); turnEl.height = Math.round(BH * 1.16 * r);
+    setTurn(0); }
+  function clearLeaf(){ leafSrc = null; tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.clearRect(0, 0, turnEl.width, turnEl.height); }
+  function setTurn(p){
+    dimEl.style.opacity = (Math.sin(Math.PI * p) * 0.9).toFixed(3);
+    if (!leafSrc) return;
+    const r = Math.min(devicePixelRatio || 1, 2.5);
+    tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.clearRect(0, 0, turnEl.width, turnEl.height);
+    tctx.imageSmoothingQuality = 'high';
+    const COLS = 64, w = BW / COLS, top0 = BH * 0.08, P = BW * 3.2;
+    const theta = p * Math.PI, bend = 0.7 * Math.sin(Math.PI * Math.min(1, p * 1.15));
+    const kx = leafSrc.width / BW;
+    let X = 0, Z = 0;                          // distance from the spine, height above the page
+    let ea = Math.round(BW * r);               // device-pixel edge shared with the previous column: no gaps, no overlaps
+    for (let k = 0; k < COLS; k++){
+      const phi = theta * ((1 - bend) + bend * Math.pow((k + 1) / COLS, 2));
+      const c = Math.cos(phi), sn = Math.sin(phi);
+      const X2 = X + w * c, Z2 = Z + w * sn;
+      const s1 = P / (P - Z), s2 = P / (P - Z2);
+      const eb = Math.round((BW - X2 * s2) * r);
+      const sm = (s1 + s2) / 2, h = Math.round(BH * sm * r), y = Math.round((top0 + (BH - BH * sm) / 2) * r);
+      const left = Math.min(ea, eb), width = Math.abs(ea - eb);
+      if (width > 0){
+        if (c >= 0) tctx.drawImage(leafSrc, (BW - (k + 1) * w) * kx, 0, w * kx, leafSrc.height, left, y, width, h);
+        else { tctx.fillStyle = '#f5ece2'; tctx.fillRect(left, y, width, h); }
+        const shade = 0.16 * sn + 0.22 * Math.max(0, -c);
+        if (shade > 0.003){ tctx.fillStyle = 'rgba(58,26,34,' + shade.toFixed(3) + ')'; tctx.fillRect(left, y, width, h); }
+        const shine = 0.10 * Math.max(0, sn) * Math.max(0, c) * Math.max(0, 1 - Math.abs(phi - 0.6));
+        if (shine > 0.003){ tctx.fillStyle = 'rgba(255,255,255,' + shine.toFixed(3) + ')'; tctx.fillRect(left, y, width, h); }
+      }
+      ea = eb;
+      X = X2; Z = Z2;
+    }
+  }
+  function animateTo(from, to, ms){
+    return new Promise(res => {
+      if (still){ setTurn(to); return res(); }
+      const t0 = performance.now();
+      const step = t => { const k = Math.min(1, (t - t0) / ms), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        setTurn(from + (to - from) * e); k < 1 ? requestAnimationFrame(step) : res(); };
+      requestAnimationFrame(step);
+    });
+  }
+  function label(){ countEl.textContent = ar(cur) + ' / ' + ar(doc.numPages);
+    nextBtn.disabled = cur >= doc.numPages; prevBtn.disabled = cur <= 1; }
+  function preload(){ for (const n of [cur + 1, cur - 1, cur + 2]) if (n >= 1 && n <= doc.numPages) pageCanvas(n); }
+
+  // start a turn: forward lifts the current page off the next one; backward brings the previous page back over
+  async function begin(dir){
+    const target = cur + dir; if (target < 1 || target > doc.numPages) return false;
+    if (dir > 0){ await paintBase(target); await buildLeaf(cur); setTurn(0); }
+    else { await paintBase(cur); await buildLeaf(target); setTurn(1); }
+    return true;
+  }
+  async function finish(dir, p){
+    const done = dir > 0 ? p > 0.35 : p < 0.65;
+    await animateTo(p, dir > 0 ? (done ? 1 : 0) : (done ? 0 : 1), 420 + 380 * (dir > 0 ? (done ? 1 - p : p) : (done ? p : 1 - p)));
+    if (done) cur += dir;
+    await paintBase(cur); clearLeaf(); dimEl.style.opacity = 0;
+    label(); preload();
+  }
+  async function step(dir){
+    if (busy || !doc) return; busy = true;
+    if (await begin(dir)){
+      await animateTo(dir > 0 ? 0 : 1, dir > 0 ? 1 : 0, 850);
+      cur += dir; await paintBase(cur); clearLeaf(); dimEl.style.opacity = 0; label(); preload();
+    }
+    busy = false;
+  }
+
+  // drag with the finger: moving right turns forward (an Arabic book opens right to left)
+  bookEl.addEventListener('pointerdown', e => {
+    if (busy || !doc) return;
+    drag = {x: e.clientX, y: e.clientY, dir: 0, p: 0, ready: false, t: performance.now()};
+    bookEl.setPointerCapture(e.pointerId);
+  });
+  bookEl.addEventListener('pointermove', async e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.dir){
+      if (Math.abs(dx) < 8) return;
+      drag.dir = dx > 0 ? 1 : -1; busy = true;
+      drag.ready = await begin(drag.dir);
+      if (!drag.ready){ busy = false; drag = null; return; }
+    }
+    if (!drag.ready) return;
+    const span = BW * 1.6;
+    drag.p = drag.dir > 0 ? Math.min(1, Math.max(0, dx / span)) : Math.min(1, Math.max(0, 1 + dx / span));
+    setTurn(drag.p);
+  });
+  const end = async e => {
+    if (!drag) return; const d = drag; drag = null;
+    if (!d.dir){                       // a simple tap: left half forward, right half back
+      const r = bookEl.getBoundingClientRect();
+      if (e.type === 'pointerup') step(e.clientX - r.left < r.width / 2 ? 1 : -1);
+      return;
+    }
+    if (!d.ready) return;
+    const fast = (performance.now() - d.t) < 260;
+    await finish(d.dir, fast ? (d.dir > 0 ? Math.max(d.p, 0.4) : Math.min(d.p, 0.6)) : d.p);
+    busy = false;
+  };
+  bookEl.addEventListener('pointerup', end);
+  bookEl.addEventListener('pointercancel', end);
+  nextBtn.addEventListener('click', () => step(1));
+  prevBtn.addEventListener('click', () => step(-1));
+  addEventListener('keydown', e => { if (e.key === 'ArrowLeft') step(1); if (e.key === 'ArrowRight') step(-1); });
+
+  function showNote(){
+    const note = document.getElementById('note'), lines = note.querySelectorAll('p,.orn');
+    note.hidden = false; let gone = false;
+    lines.forEach((l, i) => setTimeout(() => l.classList.add('on'), still ? 0 : 300 + i * 1600));
+    const go = () => { if (gone) return; gone = true; note.classList.add('out');
+      setTimeout(() => { note.hidden = true; openBook(); }, still ? 0 : 1000); };
+    setTimeout(go, still ? 6000 : 9500);
+    setTimeout(() => note.addEventListener('click', go), 1800);
+  }
+
+  /* ---------- sounds: each file loops forever, every pass melting into the next so the seam is never heard ---------- */
+  let actx = null;
+  function audio(){
+    if (!actx){
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (_){}
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (actx.state !== 'running') actx.resume();
+    return actx;
+  }
+  const fetched = {};
+  const fetchSound = url => fetched[url] || (fetched[url] = fetch(url + '?v=' + V).then(r => { if (!r.ok) throw new Error('net'); return r.arrayBuffer(); })
+    .catch(e => { delete fetched[url]; throw e; }));
+  // equal-power curves keep the loudness steady while one pass hands over to the next
+  const FADE_STEPS = 64, upCurve = new Float32Array(FADE_STEPS), downCurve = new Float32Array(FADE_STEPS);
+  for (let i = 0; i < FADE_STEPS; i++){ const x = i / (FADE_STEPS - 1); upCurve[i] = Math.sin(x * Math.PI / 2); downCurve[i] = Math.cos(x * Math.PI / 2); }
+  function makeLoop(btn, url, level, fade){
+    let master = null, buf = null, playing = false, timer = null, next = 0, loading = null, live = [];
+    function schedule(){
+      if (!playing) return;
+      const ctx = actx;
+      while (next < ctx.currentTime + 15){
+        const src = ctx.createBufferSource(), g = ctx.createGain(), d = buf.duration;
+        src.buffer = buf; src.connect(g); g.connect(master);
+        g.gain.setValueAtTime(0, ctx.currentTime);
+        g.gain.setValueCurveAtTime(upCurve, next, fade);
+        g.gain.setValueCurveAtTime(downCurve, next + d - fade, fade);
+        src.start(next); src.stop(next + d + .05); live.push(src);
+        src.onended = () => { live = live.filter(x => x !== src); };
+        next += d - fade;
+      }
+    }
+    btn.addEventListener('click', async () => {
+      try {
+        const ctx = audio();
+        if (!master){ master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); }
+        playing = !playing;
+        btn.classList.toggle('on', playing); btn.setAttribute('aria-pressed', String(playing));
+        const now = ctx.currentTime;
+        master.gain.cancelScheduledValues(now); master.gain.setValueAtTime(master.gain.value, now);
+        if (playing){
+          if (!buf){
+            btn.classList.add('wait');
+            loading = loading || fetchSound(url).then(ab => new Promise((ok, no) => ctx.decodeAudioData(ab.slice(0), ok, no))).then(b => { buf = b; })
+              .catch(e => { loading = null; throw e; });
+            try { await loading; } finally { btn.classList.remove('wait'); }
+            if (!playing) return;
+          }
+          if (next < ctx.currentTime + .05) next = ctx.currentTime + .05;
+          schedule(); clearInterval(timer); timer = setInterval(schedule, 4000);
+          master.gain.linearRampToValueAtTime(level, ctx.currentTime + 1.8);
+        } else {
+          master.gain.linearRampToValueAtTime(0, now + .9);
+          clearInterval(timer);
+          setTimeout(() => { if (playing) return; live.forEach(x => { try { x.stop(); } catch (_){} }); live = []; next = 0; }, 1000);
+        }
+      } catch (_){
+        playing = false; btn.classList.remove('on', 'wait'); btn.setAttribute('aria-pressed', 'false');
+      }
+    });
+  }
+  makeLoop(document.getElementById('sndNature'), 'nature.mp3', .8, 4);
+  makeLoop(document.getElementById('sndFire'), 'fire.mp3', .85, 5);
+
+  /* ---------- day / night ---------- */
+  const modeBtn = document.getElementById('mode'), themeMeta = document.querySelector('meta[name="theme-color"]');
+  function paintMode(){
+    const night = root.classList.contains('night');
+    modeBtn.setAttribute('aria-label', night ? 'الوضع النهاري' : 'الوضع الليلي');
+    setTimeout(() => themeMeta.setAttribute('content', getComputedStyle(root).getPropertyValue('--paper').trim() || (night ? '#0a0d1f' : '#fdf8f2')), 50);
+    if (still) draw(0);
+  }
+  modeBtn.addEventListener('click', () => {
+    root.classList.toggle('night');
+    try { localStorage.setItem('ly-mode', root.classList.contains('night') ? 'night' : 'day'); } catch (_){}
+    paintMode();
+  });
+  paintMode();
+
+  async function openBook(){
+    const reader = document.getElementById('reader'), status = document.getElementById('status');
+    reader.hidden = false; requestAnimationFrame(() => reader.classList.add('show')); scrollTo(0, 0); document.documentElement.scrollTop = 0;
+
+    // Safari only saves a file inside the tap itself, so the book is decrypted ahead of time and handed over instantly
+    const dlBtn = document.getElementById('dl'), label0 = dlBtn.textContent; let pdfP = null, pdfUrl = null;
+    const prepPdf = () => pdfP || (pdfP = fetch('book.bin?v=' + V).then(r => { if (!r.ok) throw new Error('net'); return r.arrayBuffer(); })
+      .then(ab => decrypt(meta.f, new Uint8Array(ab)))
+      .then(pdf => { pdfUrl = URL.createObjectURL(new Blob([pdf], {type: 'application/pdf'})); return pdfUrl; })
+      .catch(e => { pdfP = null; throw e; }));
+    dlBtn.addEventListener('click', () => {
+      if (pdfUrl){
+        dlBtn.classList.remove('ready'); dlBtn.textContent = label0;
+        const a = document.createElement('a'); a.href = pdfUrl; a.download = 'ليل…يوم.pdf'; a.rel = 'noopener';
+        document.body.appendChild(a); a.click(); a.remove();
+        return;
+      }
+      if (dlBtn.dataset.wait) return;
+      dlBtn.dataset.wait = '1'; dlBtn.textContent = 'لحظة…';
+      prepPdf().then(() => { dlBtn.classList.add('ready'); dlBtn.textContent = 'الكتاب جاهز اضغط للتحميل'; }, () => { dlBtn.textContent = label0; })
+        .finally(() => { delete dlBtn.dataset.wait; });
+    });
+    upTo(pagesBuf.length).then(prepPdf).catch(() => {});
+
+    doc = {numPages: meta.p.length};
+    for (let tries = 0; ; tries++){
+      try {
+        status.hidden = true; document.getElementById('stage').hidden = false; document.getElementById('nav').hidden = false;
+        fit(); await paintBase(1); label(); preload();
+        break;
+      } catch (_){
+        document.getElementById('stage').hidden = true; document.getElementById('nav').hidden = true;
+        status.hidden = false; status.textContent = 'لحظة… الصفحات تتفتح';
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+  }
+})();
+</script>
+</body>
+</html>
