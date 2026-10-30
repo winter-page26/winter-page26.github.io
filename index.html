@@ -8,7 +8,7 @@
 <title>ليل… يوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap">
-<link rel="preload" href="meta.json?v=11" as="fetch" crossorigin>
+<link rel="preload" href="meta.json?v=10" as="fetch" crossorigin>
 <script>
 /* which season is it? astronomical seasons from Meeus' equinox/solstice formulas (accurate to about a minute) */
 (function(){
@@ -309,7 +309,7 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
 
 <script>
 (() => {
-  const V = '11';
+  const V = '10';
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const root = document.documentElement;
 
@@ -693,11 +693,9 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
     else { await paintBase(cur); await buildLeaf(target); setTurn(1); }
     return true;
   }
-  async function finish(dir, p, rate = 1){
+  async function finish(dir, p){
     const done = dir > 0 ? p > 0.35 : p < 0.65;
-    const ms = 420 + 380 * (dir > 0 ? (done ? 1 - p : p) : (done ? p : 1 - p));
-    if (done) turnSound.play(ms, dir > 0 ? 1 - p : p, rate);   // a page that falls back stays silent
-    await animateTo(p, dir > 0 ? (done ? 1 : 0) : (done ? 0 : 1), ms);
+    await animateTo(p, dir > 0 ? (done ? 1 : 0) : (done ? 0 : 1), 420 + 380 * (dir > 0 ? (done ? 1 - p : p) : (done ? p : 1 - p)));
     if (done) cur += dir;
     await paintBase(cur); clearLeaf(); dimEl.style.opacity = 0;
     label(); preload();
@@ -705,7 +703,6 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
   async function step(dir){
     if (busy || !doc) return; busy = true;
     if (await begin(dir)){
-      turnSound.play(850, 1, 1);
       await animateTo(dir > 0 ? 0 : 1, dir > 0 ? 1 : 0, 850);
       cur += dir; await paintBase(cur); clearLeaf(); dimEl.style.opacity = 0; label(); preload();
     }
@@ -715,7 +712,6 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
   // drag with the finger: moving right turns forward (an Arabic book opens right to left)
   bookEl.addEventListener('pointerdown', e => {
     if (busy || !doc) return;
-    turnSound.load();
     drag = {x: e.clientX, y: e.clientY, dir: 0, p: 0, ready: false, t: performance.now()};
     bookEl.setPointerCapture(e.pointerId);
   });
@@ -741,54 +737,21 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
       return;
     }
     if (!d.ready) return;
-    const took = performance.now() - d.t, fast = took < 260;
-    const moved = d.dir > 0 ? d.p : 1 - d.p, speed = moved / Math.max(took / 1000, .05);   // how quickly her finger carried the page
-    const rate = Math.min(1.08, Math.max(.9, .9 + speed * .12));
-    await finish(d.dir, fast ? (d.dir > 0 ? Math.max(d.p, 0.4) : Math.min(d.p, 0.6)) : d.p, rate);
+    const fast = (performance.now() - d.t) < 260;
+    await finish(d.dir, fast ? (d.dir > 0 ? Math.max(d.p, 0.4) : Math.min(d.p, 0.6)) : d.p);
     busy = false;
   };
   bookEl.addEventListener('pointerup', end);
   bookEl.addEventListener('pointercancel', end);
-  nextBtn.addEventListener('click', () => { turnSound.load(); step(1); });
-  prevBtn.addEventListener('click', () => { turnSound.load(); step(-1); });
+  nextBtn.addEventListener('click', () => step(1));
+  prevBtn.addEventListener('click', () => step(-1));
   addEventListener('keydown', e => { if (e.key === 'ArrowLeft') step(1); if (e.key === 'ArrowRight') step(-1); });
-
-  /* ---------- the page's own sound: heard only when a page really turns over, timed so its soft landing
-     meets the page as it settles; a page let go halfway only plays what is left of the slide ---------- */
-  const turnSound = (() => {
-    const PEAK = 0.44;                                   // where the paper lands inside page.mp3
-    let buf = null, loading = null, last = null, out = null;
-    const load = () => { try { audio(); } catch (_){ return null; }
-      return loading || (loading = fetchSound('page.mp3').then(ab => new Promise((ok, no) => actx.decodeAudioData(ab.slice(0), ok, no)))
-        .then(b => { buf = b; }).catch(() => { loading = null; })); };
-    function play(ms, left, rate){
-      let ctx; try { ctx = audio(); } catch (_){ return; }
-      if (!buf){ load(); return; }
-      const now = ctx.currentTime;
-      let start = now + ms / 1000 - PEAK / rate, offset = 0;
-      if (start < now){ offset = (now - start) * rate; start = now; }   // already halfway: skip the part the page has travelled
-      if (!out){                                            // soft and capped: the high edge taken off, and a ceiling it never passes
-        const lp = ctx.createBiquadFilter(), lim = ctx.createDynamicsCompressor();
-        lp.type = 'lowpass'; lp.frequency.value = 4200; lp.Q.value = .5;
-        lim.threshold.value = -26; lim.knee.value = 6; lim.ratio.value = 20; lim.attack.value = .002; lim.release.value = .15;
-        lp.connect(lim); lim.connect(ctx.destination); out = lp;
-      }
-      const level = (root.classList.contains('night') ? .15 : .18) * (.45 + .55 * Math.sqrt(Math.max(0, Math.min(1, left))));
-      if (last){ try { last.g.gain.cancelScheduledValues(now); last.g.gain.setTargetAtTime(0, now, .03); last.s.stop(now + .25); } catch (_){} }
-      const s = ctx.createBufferSource(), g = ctx.createGain();
-      s.buffer = buf; s.playbackRate.value = rate; s.connect(g); g.connect(out);
-      g.gain.setValueAtTime(0, now); g.gain.setValueAtTime(0, start);
-      g.gain.linearRampToValueAtTime(level, start + (offset > 0 ? .07 : .02));
-      s.start(start, offset); last = {s, g};
-    }
-    return {play, load};
-  })();
 
   function showNote(){
     const note = document.getElementById('note'), lines = note.querySelectorAll('p,.orn');
     note.hidden = false; let gone = false;
     lines.forEach((l, i) => setTimeout(() => l.classList.add('on'), still ? 0 : 300 + i * 1600));
-    const go = () => { if (gone) return; gone = true; note.classList.add('out'); turnSound.load();
+    const go = () => { if (gone) return; gone = true; note.classList.add('out');
       setTimeout(() => { note.hidden = true; openBook(); }, still ? 0 : 1000); };
     setTimeout(go, still ? 6000 : 9500);
     setTimeout(() => note.addEventListener('click', go), 1800);
