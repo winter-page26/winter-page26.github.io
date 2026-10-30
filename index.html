@@ -757,7 +757,7 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
      meets the page as it settles; a page let go halfway only plays what is left of the slide ---------- */
   const turnSound = (() => {
     const PEAK = 0.44;                                   // where the paper lands inside page.mp3
-    let buf = null, loading = null, last = null;
+    let buf = null, loading = null, last = null, out = null;
     const load = () => { try { audio(); } catch (_){ return null; }
       return loading || (loading = fetchSound('page.mp3').then(ab => new Promise((ok, no) => actx.decodeAudioData(ab.slice(0), ok, no)))
         .then(b => { buf = b; }).catch(() => { loading = null; })); };
@@ -767,10 +767,16 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
       const now = ctx.currentTime;
       let start = now + ms / 1000 - PEAK / rate, offset = 0;
       if (start < now){ offset = (now - start) * rate; start = now; }   // already halfway: skip the part the page has travelled
-      const level = (root.classList.contains('night') ? .28 : .34) * (.45 + .55 * Math.sqrt(Math.max(0, Math.min(1, left))));
+      if (!out){                                            // soft and capped: the high edge taken off, and a ceiling it never passes
+        const lp = ctx.createBiquadFilter(), lim = ctx.createDynamicsCompressor();
+        lp.type = 'lowpass'; lp.frequency.value = 4200; lp.Q.value = .5;
+        lim.threshold.value = -26; lim.knee.value = 6; lim.ratio.value = 20; lim.attack.value = .002; lim.release.value = .15;
+        lp.connect(lim); lim.connect(ctx.destination); out = lp;
+      }
+      const level = (root.classList.contains('night') ? .15 : .18) * (.45 + .55 * Math.sqrt(Math.max(0, Math.min(1, left))));
       if (last){ try { last.g.gain.cancelScheduledValues(now); last.g.gain.setTargetAtTime(0, now, .03); last.s.stop(now + .25); } catch (_){} }
       const s = ctx.createBufferSource(), g = ctx.createGain();
-      s.buffer = buf; s.playbackRate.value = rate; s.connect(g); g.connect(ctx.destination);
+      s.buffer = buf; s.playbackRate.value = rate; s.connect(g); g.connect(out);
       g.gain.setValueAtTime(0, now); g.gain.setValueAtTime(0, start);
       g.gain.linearRampToValueAtTime(level, start + (offset > 0 ? .07 : .02));
       s.start(start, offset); last = {s, g};
