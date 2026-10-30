@@ -8,7 +8,7 @@
 <title>ليل… يوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap">
-<link rel="preload" href="meta.json?v=9" as="fetch" crossorigin>
+<link rel="preload" href="meta.json?v=10" as="fetch" crossorigin>
 <script>
 /* which season is it? astronomical seasons from Meeus' equinox/solstice formulas (accurate to about a minute) */
 (function(){
@@ -258,7 +258,6 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
         <label for="day">اليوم<select id="day" required><option value="">—</option></select></label>
         <label for="month">الشهر<select id="month" required><option value="">—</option></select></label>
       </div>
-      <label class="digits" for="tail">وآخر أربع أرقام من جوالك<input id="tail" inputmode="numeric" maxlength="8" autocomplete="off" autocorrect="off" spellcheck="false"></label>
       <button class="open" type="submit">فتح</button>
       <p class="msg" id="msg" role="status" aria-live="polite"></p>
     </form>
@@ -310,7 +309,7 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
 
 <script>
 (() => {
-  const V = '9';
+  const V = '10';
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const root = document.documentElement;
 
@@ -553,11 +552,9 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
   const day = document.getElementById('day'), month = document.getElementById('month');
   for (let d = 1; d <= 31; d++) day.add(new Option(String(d), String(d)));
   months.forEach((m, i) => month.add(new Option(m, String(i + 1))));
-  const msg = document.getElementById('msg'), form = document.getElementById('lock'), tail = document.getElementById('tail');
+  const msg = document.getElementById('msg'), form = document.getElementById('lock');
   const openBtn = form.querySelector('.open');
   const digits = s => String(s || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9]/g, '').slice(0, 4);
-  tail.addEventListener('blur', () => setTimeout(() => scrollTo(0, 0), 60));
-  tail.addEventListener('input', () => { const v = digits(tail.value); if (v !== tail.value) tail.value = v; });
 
   let key = null;
   const decrypt = (iv, bytes) => crypto.subtle.decrypt({name: 'AES-GCM', iv: b64(iv)}, key, bytes).then(b => new Uint8Array(b));
@@ -578,9 +575,7 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
     e.preventDefault();
     if (checking) return;
     if (!day.value || !month.value){ msg.textContent = 'اختاري اليوم والشهر'; return; }
-    const code = digits(tail.value);
-    if (code.length !== 4){ msg.textContent = 'اكتبي آخر أربع أرقام'; return; }
-    tail.blur(); scrollTo(0, 0);
+    scrollTo(0, 0);
     if (!window.crypto || !crypto.subtle){ msg.textContent = 'افتحي الرابط من Safari'; return; }
     checking = true; openBtn.disabled = true; msg.textContent = '…';
     try {
@@ -588,9 +583,9 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
       for (;;){ try { await getMeta(); break; } catch (_){ if (++tries >= 4) throw new Error('net'); await new Promise(r => setTimeout(r, 1200)); } }
       const date = month.value + '-' + day.value;
       if (!(await dateRight(date))){ msg.textContent = 'ركزي شوي بيوم ميلادك'; return; }
-      key = await makeKey(date + '-' + code);
+      key = await makeKey(date);
       try { await decrypt(meta.k.i, b64(meta.k.c)); }
-      catch (_){ key = null; msg.textContent = 'ركزي شوي بالرقم'; return; }   // the check is local and tiny: a failure here can only mean the number
+      catch (_){ key = null; msg.textContent = 'ركزي شوي بيوم ميلادك'; return; }   // the check is local and tiny: a failure here can only mean the number
     } catch (_){
       msg.textContent = 'النت ثقيل شوي… جرّبي مرة ثانية'; return;
     } finally { checking = false; openBtn.disabled = false; }
