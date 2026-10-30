@@ -8,7 +8,7 @@
 <title>ليل… يوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&display=swap">
-<link rel="preload" href="meta.json?v=8" as="fetch" crossorigin>
+<link rel="preload" href="meta.json?v=9" as="fetch" crossorigin>
 <script>
 /* which season is it? astronomical seasons from Meeus' equinox/solstice formulas (accurate to about a minute) */
 (function(){
@@ -64,6 +64,8 @@ body{background:var(--paper);color:var(--ink);font-family:var(--body);overflow-x
   radial-gradient(42% 26% at 15% 0%,rgba(236,228,255,.20),transparent 70%),
   radial-gradient(70% 50% at 100% 100%,rgba(122,70,118,.30),transparent 70%),
   linear-gradient(#0a0d1f 0%,#121731 55%,#1d1832 100%)}
+:root{background:var(--paper)}
+.sky,.nightsky{bottom:auto;height:100vh;height:100lvh}
 .night .sky{opacity:0}
 .night .nightsky{opacity:1}
 .moon{position:fixed;left:15%;top:calc(env(safe-area-inset-top,0px) - 16px);width:46px;height:46px;margin-left:-23px;border-radius:50%;pointer-events:none;z-index:0;
@@ -157,7 +159,7 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
 .tools{display:flex;align-items:center;gap:6px}
 .tools button{box-sizing:border-box;border:1px solid var(--line);background:var(--white);border-radius:999px;cursor:pointer;
   transition:background-color 1.8s ease,border-color 1.8s ease,color 1.8s ease,opacity .3s,box-shadow .3s}
-.snd{height:30px;min-width:30px;padding:0 7px;font-size:13px;line-height:1;opacity:.5;display:inline-flex;align-items:center;justify-content:center}
+.snd{height:30px;min-width:30px;padding:0 7px;font-size:13px;line-height:1;opacity:.5;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex-wrap:nowrap;flex-shrink:0}
 .snd.on{opacity:1;box-shadow:0 0 0 3px var(--blush)}
 .snd.wait{animation:breath 1s ease-in-out infinite}
 @keyframes breath{50%{opacity:.25}}
@@ -308,7 +310,7 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--wine);outline-
 
 <script>
 (() => {
-  const V = '8';
+  const V = '9';
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const root = document.documentElement;
 
